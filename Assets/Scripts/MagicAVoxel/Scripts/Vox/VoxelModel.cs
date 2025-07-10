@@ -30,14 +30,10 @@ public class VoxelModel : MonoBehaviour
     [SerializeField]
     private bool updateCollider = false;
 
-    public static List<VoxelModel> allVoxelModels = new List<VoxelModel>();
-
     void OnEnable()
     {
         // Initialize components
-        meshFilter = GetComponent<MeshFilter>();
-        meshRenderer = GetComponent<MeshRenderer>();
-        meshCollider = GetComponent<MeshCollider>();
+        InitializeComponents();
 
         // Assign material if not already assigned
         AssignMaterial();
@@ -45,15 +41,16 @@ public class VoxelModel : MonoBehaviour
         // Initialize the palette and load the voxel model
         InitializeDefaultPalette();
         LoadVoxelModel();
-        if (!allVoxelModels.Contains(this))
-            allVoxelModels.Add(this);
     }
 
-    void OnDisable()
+    private void InitializeComponents()
     {
-        if (allVoxelModels.Contains(this))
-            allVoxelModels.Remove(this);
+        meshFilter = GetComponent<MeshFilter>();
+        meshRenderer = GetComponent<MeshRenderer>();
+        meshCollider = GetComponent<MeshCollider>();
     }
+
+
     private void AssignMaterial()
     {
         if (meshRenderer.sharedMaterial == null)
@@ -79,10 +76,19 @@ public class VoxelModel : MonoBehaviour
         }
         else
         {
+            ClearVoxelData();
             Debug.LogError("VoxelModel: No .vox file assigned to " + gameObject.name + " object, child of " + transform.parent.name);
         }
     }
 
+    private void ClearVoxelData()
+    {
+        if (mesh != null)
+        {
+            voxels.Clear();
+            GenerateMesh();
+        }
+    }
 
     private void LoadVoxFile(byte[] voxData)
     {
@@ -356,14 +362,7 @@ public class VoxelModel : MonoBehaviour
     void OnValidate()
     {
         // Initialize components if they are null
-        if (meshFilter == null)
-            meshFilter = GetComponent<MeshFilter>();
-
-        if (meshRenderer == null)
-            meshRenderer = GetComponent<MeshRenderer>();
-
-        if (meshCollider == null)
-            meshCollider = GetComponent<MeshCollider>();
+        InitializeComponents();
 
         // Initialize the mesh if it is null
         if (mesh == null)
@@ -387,9 +386,7 @@ public class VoxelModel : MonoBehaviour
         }
         else
         {
-            // Clear the mesh if no voxAsset is assigned
-            if (mesh != null)
-                mesh.Clear();
+            ClearVoxelData();
         }
     }
 }
