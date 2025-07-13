@@ -15,17 +15,17 @@ public class VoxAutoReload : AssetPostprocessor
         {
             if (Path.GetExtension(assetPath).Equals(".vox", System.StringComparison.OrdinalIgnoreCase))
             {
-                // Find all VoxelModel components in the scene instead of using static list
-                VoxelModel[] allModels = FindObjectsOfType<VoxelModel>();
-                foreach (VoxelModel voxelModel in allModels)
+                // Find all VoxelController components in the scene instead of using static list
+                VoxelController[] allModels = FindObjectsOfType<VoxelController>();
+                foreach (VoxelController voxelController in allModels)
                 {
-                    bool shouldReloadModel = voxelModel.voxAsset == null || 
-                        AssetDatabase.GetAssetPath(voxelModel.voxAsset) == assetPath;
+                    bool shouldReloadModel = voxelController.voxAsset == null || 
+                        AssetDatabase.GetAssetPath(voxelController.voxAsset) == assetPath;
                     
                     if (shouldReloadModel)
                     {
-                        voxelModel.LoadVoxelModel();
-                        EditorUtility.SetDirty(voxelModel);
+                        voxelController.LoadVoxelModel();
+                        EditorUtility.SetDirty(voxelController);
                     }
                 }
             }
