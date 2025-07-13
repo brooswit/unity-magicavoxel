@@ -14,6 +14,10 @@ public class VoxelController : MonoBehaviour
     [SerializeField]
     private bool convexCollider = false;
     
+    [Header("Alternate Palette")]
+    [Tooltip("Optional PNG texture to override the voxel file's palette. Leave empty to use original palette.")]
+    public Texture2D alternatePaletteTexture;
+    
     // Mesh components
     private MeshFilter meshFilter;
     private MeshRenderer meshRenderer;
@@ -60,18 +64,19 @@ public class VoxelController : MonoBehaviour
 
     public void LoadVoxelModel()
     {
-        if (voxAsset?.data?.meshes != null && voxAsset.data.meshes.Length > 0)
+        if (voxAsset?.data?.models != null && voxAsset.data.models.Length > 0)
         {
             // Clamp modelIndex to valid range
-            int clampedIndex = Mathf.Clamp(modelIndex, 0, voxAsset.data.meshes.Length - 1);
+            int clampedIndex = Mathf.Clamp(modelIndex, 0, voxAsset.data.models.Length - 1);
             
             if (clampedIndex != modelIndex)
             {
                 modelIndex = clampedIndex;
             }
             
-            // Use the selected mesh from the asset
-            meshFilter.sharedMesh = voxAsset.data.meshes[modelIndex];
+            // Use mesh cache for optimal performance and palette support
+            var mesh = VoxelMeshCache.GetOrCreateMesh(voxAsset, alternatePaletteTexture, modelIndex);
+            meshFilter.sharedMesh = mesh;
 
             // Update collider if needed
             if (updateCollider)
@@ -107,7 +112,7 @@ public class VoxelController : MonoBehaviour
         }
 
         meshCollider.sharedMesh = null;
-        meshCollider.sharedMesh = voxAsset.data.meshes[modelIndex];
+        meshCollider.sharedMesh = meshFilter.sharedMesh;
 
         // Set the convex property based on the presence of a Rigidbody
         if (GetComponent<Rigidbody>() != null && convexCollider)
