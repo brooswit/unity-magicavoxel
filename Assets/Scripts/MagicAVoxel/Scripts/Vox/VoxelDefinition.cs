@@ -78,10 +78,7 @@ public class VoxelDefinition : MonoBehaviour
         }
     }
     
-    private VoxData GetParsedData()
-    {
-        return _cachedVoxData;
-    }
+
     
     private void GenerateDefaultPaletteMeshes(VoxData voxData)
     {
@@ -165,8 +162,7 @@ public class VoxelDefinition : MonoBehaviour
             return string.Empty;
         }
         
-        var voxData = GetParsedData();
-        if (voxData?.models == null)
+        if (_cachedVoxData?.models == null)
         {
             Debug.LogError("VoxelDefinition: No vox data available");
             return string.Empty;
@@ -176,10 +172,10 @@ public class VoxelDefinition : MonoBehaviour
         var voxPalette = CreatePaletteFromTexture(palette);
         
         // Generate and cache meshes for all frames
-        for (int frameIndex = 0; frameIndex < voxData.models.Length; frameIndex++)
+        for (int frameIndex = 0; frameIndex < _cachedVoxData.models.Length; frameIndex++)
         {
             var key = (paletteName, frameIndex);
-            var mesh = VoxTools.GenerateMesh(voxData.models[frameIndex], voxPalette);
+            var mesh = VoxTools.GenerateMesh(_cachedVoxData.models[frameIndex], voxPalette);
             mesh.name = $"VoxelMesh_{voxAsset.name}_{paletteName}_{frameIndex}";
             _meshCache[key] = mesh;
         }
@@ -201,8 +197,7 @@ public class VoxelDefinition : MonoBehaviour
             return string.Empty;
         }
         
-        var voxData = GetParsedData();
-        if (voxData?.models == null)
+        if (_cachedVoxData?.models == null)
         {
             Debug.LogError("VoxelDefinition: No vox data available");
             return string.Empty;
@@ -215,7 +210,7 @@ public class VoxelDefinition : MonoBehaviour
         _customPaletteNames.Add(paletteName);
         
         // Create custom palette by starting with base palette and applying overrides
-        var customPalette = new VoxPalette(voxData.palette);
+        var customPalette = new VoxPalette(_cachedVoxData.palette);
         foreach (var kvp in colorOverrides)
         {
             if (kvp.Key >= 0 && kvp.Key < 256)
@@ -225,10 +220,10 @@ public class VoxelDefinition : MonoBehaviour
         }
         
         // Generate and cache meshes for all frames
-        for (int frameIndex = 0; frameIndex < voxData.models.Length; frameIndex++)
+        for (int frameIndex = 0; frameIndex < _cachedVoxData.models.Length; frameIndex++)
         {
             var key = (paletteName, frameIndex);
-            var mesh = VoxTools.GenerateMesh(voxData.models[frameIndex], customPalette);
+            var mesh = VoxTools.GenerateMesh(_cachedVoxData.models[frameIndex], customPalette);
             mesh.name = $"VoxelMesh_{voxAsset.name}_{paletteName}_{frameIndex}";
             _meshCache[key] = mesh;
         }
@@ -287,8 +282,7 @@ public class VoxelDefinition : MonoBehaviour
     /// </summary>
     public int GetFrameCount()
     {
-        var voxData = GetParsedData();
-        return voxData?.models?.Length ?? 0;
+        return _cachedVoxData?.models?.Length ?? 0;
     }
     
     /// <summary>
