@@ -1,4 +1,17 @@
 # CHANGELOG
+## 0.0.5
+### Enhance New Architecture with Missing Features
+- Add: [ExecuteInEditMode] support for real-time editor updates
+- Add: Enhanced collider management with optional flags and Rigidbody detection
+- Add: Automatic material assignment with shader fallback hierarchy
+- Add: Comprehensive error handling and null safety throughout system
+- Add: Texture-based palette generation for cross-system compatibility
+- Add: Cache management tools (GetCacheStats, LogCacheStats, ClearFrame, RefreshCache)
+- Add: Public properties for collider settings in VoxelMeshSelector
+- Add: OnEnable lifecycle method for better component initialization
+- Improve: Better material naming and shader detection
+- Improve: Detailed logging for debugging and error tracking
+
 ## 0.0.4
 ### Implement New Architecture Based on README Specification
 - Add: VoxelDefinition MonoBehaviour for centralized voxel data and palette management

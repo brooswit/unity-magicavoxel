@@ -6,6 +6,7 @@ using System;
 /// VoxelDefinition manages voxel model data and palette caching.
 /// This is the core component that handles mesh generation and caching for different palettes.
 /// </summary>
+[ExecuteInEditMode]
 public class VoxelDefinition : MonoBehaviour
 {
     [Header("Voxel Data")]
@@ -32,6 +33,11 @@ public class VoxelDefinition : MonoBehaviour
         InitializeCache();
     }
     
+    void OnEnable()
+    {
+        InitializeCache();
+    }
+    
     void OnValidate()
     {
         // Clear cache when asset or palettes change
@@ -41,16 +47,31 @@ public class VoxelDefinition : MonoBehaviour
     
     private void InitializeCache()
     {
-        if (voxAsset?.rawData == null) return;
+        if (voxAsset?.rawData == null) 
+        {
+            Debug.LogWarning($"VoxelDefinition '{name}': No voxAsset or rawData assigned");
+            return;
+        }
         
         var voxData = GetParsedData();
-        if (voxData?.models == null) return;
+        if (voxData?.models == null || voxData.models.Length == 0) 
+        {
+            Debug.LogWarning($"VoxelDefinition '{name}': Failed to parse vox data or no models found");
+            return;
+        }
         
-        // Generate meshes for default palette
-        GenerateDefaultPaletteMeshes(voxData);
-        
-        // Generate meshes for extra palettes
-        GenerateExtraPaletteMeshes(voxData);
+        try
+        {
+            // Generate meshes for default palette
+            GenerateDefaultPaletteMeshes(voxData);
+            
+            // Generate meshes for extra palettes
+            GenerateExtraPaletteMeshes(voxData);
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"VoxelDefinition '{name}': Failed to initialize cache - {ex.Message}");
+        }
     }
     
     private VoxData GetParsedData()
@@ -68,6 +89,8 @@ public class VoxelDefinition : MonoBehaviour
     
     private void GenerateDefaultPaletteMeshes(VoxData voxData)
     {
+        if (voxData?.models == null || voxData.palette == null) return;
+        
         string paletteName = "default";
         
         for (int frameIndex = 0; frameIndex < voxData.models.Length; frameIndex++)
@@ -75,32 +98,60 @@ public class VoxelDefinition : MonoBehaviour
             var key = (paletteName, frameIndex);
             if (!_meshCache.ContainsKey(key))
             {
-                var mesh = VoxTools.GenerateMesh(voxData.models[frameIndex], voxData.palette);
-                mesh.name = $"VoxelMesh_{voxAsset.name}_{paletteName}_{frameIndex}";
-                _meshCache[key] = mesh;
+                try
+                {
+                    var mesh = VoxTools.GenerateMesh(voxData.models[frameIndex], voxData.palette);
+                    if (mesh != null)
+                    {
+                        mesh.name = $"VoxelMesh_{voxAsset.name}_{paletteName}_{frameIndex}";
+                        _meshCache[key] = mesh;
+                    }
+                }
+                catch (System.Exception ex)
+                {
+                    Debug.LogError($"VoxelDefinition '{name}': Failed to generate mesh for frame {frameIndex} - {ex.Message}");
+                }
             }
         }
     }
     
     private void GenerateExtraPaletteMeshes(VoxData voxData)
     {
+        if (voxData?.models == null || extraPalettes == null) return;
+        
         for (int i = 0; i < extraPalettes.Length; i++)
         {
             var paletteTexture = extraPalettes[i];
-            if (paletteTexture == null) continue;
-            
-            string paletteName = paletteTexture.name;
-            var palette = CreatePaletteFromTexture(paletteTexture);
-            
-            for (int frameIndex = 0; frameIndex < voxData.models.Length; frameIndex++)
+            if (paletteTexture == null) 
             {
-                var key = (paletteName, frameIndex);
-                if (!_meshCache.ContainsKey(key))
+                Debug.LogWarning($"VoxelDefinition '{name}': Extra palette at index {i} is null");
+                continue;
+            }
+            
+            string paletteName = string.IsNullOrEmpty(paletteTexture.name) ? $"palette_{i}" : paletteTexture.name;
+            
+            try
+            {
+                var palette = CreatePaletteFromTexture(paletteTexture);
+                if (palette == null) continue;
+                
+                for (int frameIndex = 0; frameIndex < voxData.models.Length; frameIndex++)
                 {
-                    var mesh = VoxTools.GenerateMesh(voxData.models[frameIndex], palette);
-                    mesh.name = $"VoxelMesh_{voxAsset.name}_{paletteName}_{frameIndex}";
-                    _meshCache[key] = mesh;
+                    var key = (paletteName, frameIndex);
+                    if (!_meshCache.ContainsKey(key))
+                    {
+                        var mesh = VoxTools.GenerateMesh(voxData.models[frameIndex], palette);
+                        if (mesh != null)
+                        {
+                            mesh.name = $"VoxelMesh_{voxAsset.name}_{paletteName}_{frameIndex}";
+                            _meshCache[key] = mesh;
+                        }
+                    }
                 }
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"VoxelDefinition '{name}': Failed to generate meshes for palette '{paletteName}' - {ex.Message}");
             }
         }
     }
@@ -259,6 +310,71 @@ public class VoxelDefinition : MonoBehaviour
         return new List<string>(palettes).ToArray();
     }
     
+    /// <summary>
+    /// Creates a Texture2D representation of the specified palette.
+    /// Useful for cross-system compatibility and visual editing.
+    /// </summary>
+    /// <param name="paletteName">Name of the palette to convert to texture</param>
+    /// <returns>16x16 Texture2D with palette colors, or null if palette not found</returns>
+    public Texture2D CreatePaletteTexture(string paletteName = null)
+    {
+        if (string.IsNullOrEmpty(paletteName))
+            paletteName = "default";
+            
+        VoxPalette palette = null;
+        
+        // Get the appropriate palette
+        if (paletteName == "default")
+        {
+            var voxData = GetParsedData();
+            palette = voxData?.palette;
+        }
+        else
+        {
+            // For extra palettes, find by name
+            for (int i = 0; i < extraPalettes.Length; i++)
+            {
+                var paletteTexture = extraPalettes[i];
+                if (paletteTexture != null && paletteTexture.name == paletteName)
+                {
+                    palette = CreatePaletteFromTexture(paletteTexture);
+                    break;
+                }
+            }
+            
+            // For custom palettes, we'd need to store them... 
+            // This is a limitation of the current design
+        }
+        
+        if (palette == null)
+        {
+            Debug.LogWarning($"VoxelDefinition '{name}': Palette '{paletteName}' not found");
+            return null;
+        }
+        
+        return CreateTextureFromPalette(palette, paletteName);
+    }
+    
+    private Texture2D CreateTextureFromPalette(VoxPalette palette, string paletteName)
+    {
+        // Create 16x16 texture for easy visual editing
+        var texture = new Texture2D(16, 16, TextureFormat.RGBA32, false);
+        texture.filterMode = FilterMode.Point;
+        texture.name = paletteName;
+        
+        // Set palette colors
+        var colors = new Color32[256];
+        for (int i = 0; i < 256; i++)
+        {
+            colors[i] = palette[i];
+        }
+        
+        texture.SetPixels32(colors);
+        texture.Apply();
+        
+        return texture;
+    }
+    
     private void ClearAllCaches()
     {
         foreach (var mesh in _meshCache.Values)
@@ -288,6 +404,75 @@ public class VoxelDefinition : MonoBehaviour
         return palette;
     }
     
+    /// <summary>
+    /// Gets cache statistics for debugging purposes.
+    /// </summary>
+    public (int meshCount, int paletteCount) GetCacheStats()
+    {
+        var paletteNames = new HashSet<string>();
+        foreach (var key in _meshCache.Keys)
+        {
+            paletteNames.Add(key.Item1);
+        }
+        
+        return (_meshCache.Count, paletteNames.Count);
+    }
+    
+    /// <summary>
+    /// Logs detailed cache information for debugging.
+    /// </summary>
+    public void LogCacheStats()
+    {
+        var stats = GetCacheStats();
+        Debug.Log($"VoxelDefinition '{name}': {stats.meshCount} cached meshes across {stats.paletteCount} palettes");
+        
+        var paletteBreakdown = new Dictionary<string, int>();
+        foreach (var key in _meshCache.Keys)
+        {
+            paletteBreakdown[key.Item1] = paletteBreakdown.GetValueOrDefault(key.Item1, 0) + 1;
+        }
+        
+        foreach (var kvp in paletteBreakdown)
+        {
+            Debug.Log($"  - Palette '{kvp.Key}': {kvp.Value} meshes");
+        }
+    }
+    
+    /// <summary>
+    /// Clears cached meshes for a specific frame across all palettes.
+    /// </summary>
+    /// <param name="frameIndex">Frame index to clear</param>
+    public void ClearFrame(int frameIndex)
+    {
+        var keysToRemove = new List<(string, int)>();
+        
+        foreach (var key in _meshCache.Keys)
+        {
+            if (key.Item2 == frameIndex)
+            {
+                keysToRemove.Add(key);
+            }
+        }
+        
+        foreach (var key in keysToRemove)
+        {
+            if (_meshCache.TryGetValue(key, out var mesh) && mesh != null)
+            {
+                DestroyImmediate(mesh);
+            }
+            _meshCache.Remove(key);
+        }
+    }
+    
+    /// <summary>
+    /// Forces a refresh of all cached meshes.
+    /// </summary>
+    public void RefreshCache()
+    {
+        ClearAllCaches();
+        InitializeCache();
+    }
+
     void OnDestroy()
     {
         ClearAllCaches();

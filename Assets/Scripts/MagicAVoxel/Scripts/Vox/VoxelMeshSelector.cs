@@ -5,6 +5,7 @@ using UnityEngine;
 /// VoxelMeshSelector selects and displays specific frames and palettes from a VoxelDefinition.
 /// This component handles mesh assignment and automatic synchronization.
 /// </summary>
+[ExecuteInEditMode]
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
 public class VoxelMeshSelector : MonoBehaviour
 {
@@ -17,6 +18,13 @@ public class VoxelMeshSelector : MonoBehaviour
     
     [Tooltip("Name of the palette to use")]
     [SerializeField] private string _paletteName = "default";
+    
+    [Header("Collider Settings")]
+    [Tooltip("Whether to automatically update the mesh collider when mesh changes")]
+    [SerializeField] private bool _updateCollider = false;
+    
+    [Tooltip("Whether to make the collider convex (required for Rigidbody physics)")]
+    [SerializeField] private bool _convexCollider = false;
     
     // Mesh components
     private MeshFilter _meshFilter;
@@ -40,6 +48,18 @@ public class VoxelMeshSelector : MonoBehaviour
     {
         get => _paletteName;
         set => SelectPalette(value);
+    }
+    
+    public bool UpdateCollider
+    {
+        get => _updateCollider;
+        set => _updateCollider = value;
+    }
+    
+    public bool ConvexCollider
+    {
+        get => _convexCollider;
+        set => _convexCollider = value;
     }
     
     void Awake()
@@ -79,15 +99,7 @@ public class VoxelMeshSelector : MonoBehaviour
         _meshCollider = GetComponent<MeshCollider>(); // Optional component
         
         // Assign default shader if no material is set
-        if (_meshRenderer != null && _meshRenderer.sharedMaterial == null)
-        {
-            Shader shader = Shader.Find("Custom/VertexColorShader");
-            if (shader != null)
-            {
-                Material material = new Material(shader);
-                _meshRenderer.sharedMaterial = material;
-            }
-        }
+        AssignDefaultMaterial();
     }
     
     /// <summary>
@@ -109,11 +121,10 @@ public class VoxelMeshSelector : MonoBehaviour
         {
             _meshFilter.sharedMesh = mesh;
             
-            // Update collider if present
-            if (_meshCollider != null)
+            // Update collider if enabled
+            if (_updateCollider)
             {
-                _meshCollider.sharedMesh = null;
-                _meshCollider.sharedMesh = mesh;
+                UpdateCollider();
             }
         }
         else
@@ -132,8 +143,57 @@ public class VoxelMeshSelector : MonoBehaviour
         if (_meshFilter != null)
             _meshFilter.sharedMesh = null;
         
-        if (_meshCollider != null)
+        if (_updateCollider && _meshCollider != null)
             _meshCollider.sharedMesh = null;
+    }
+    
+    private void UpdateCollider()
+    {
+        if (_meshCollider == null)
+        {
+            _meshCollider = GetComponent<MeshCollider>();
+            if (_meshCollider == null)
+            {
+                _meshCollider = gameObject.AddComponent<MeshCollider>();
+            }
+        }
+
+        _meshCollider.sharedMesh = null;
+        _meshCollider.sharedMesh = _meshFilter.sharedMesh;
+
+        // Set convex property based on settings and Rigidbody presence
+        bool hasRigidbody = GetComponent<Rigidbody>() != null;
+        _meshCollider.convex = _convexCollider || hasRigidbody;
+    }
+    
+    private void AssignDefaultMaterial()
+    {
+        if (_meshRenderer == null || _meshRenderer.sharedMaterial != null) return;
+        
+        // Try to find appropriate shader in order of preference
+        string[] shaderNames = {
+            "Custom/VertexColorShader",
+            "Custom/VertexColorLitShader", 
+            "Unlit/Color",
+            "Standard"
+        };
+        
+        foreach (string shaderName in shaderNames)
+        {
+            Shader shader = Shader.Find(shaderName);
+            if (shader != null)
+            {
+                Material material = new Material(shader);
+                material.name = $"VoxelMaterial_{gameObject.name}";
+                _meshRenderer.sharedMaterial = material;
+                break;
+            }
+        }
+        
+        if (_meshRenderer.sharedMaterial == null)
+        {
+            Debug.LogWarning($"VoxelMeshSelector: Could not find any suitable shader for {gameObject.name}");
+        }
     }
     
     /// <summary>
