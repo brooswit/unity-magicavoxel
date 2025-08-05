@@ -75,11 +75,19 @@ public class VoxelDefinition : MonoBehaviour
         try
         {
             GenerateDefaultPaletteMeshes();
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"VoxelDefinition '{name}': Failed to generate default palette meshes - {ex.Message}");
+        }
+        
+        try
+        {
             GenerateExtraPaletteMeshes();
         }
         catch (System.Exception ex)
         {
-            Debug.LogError($"VoxelDefinition '{name}': Failed to initialize cache - {ex.Message}");
+            Debug.LogError($"VoxelDefinition '{name}': Failed to generate extra palette meshes - {ex.Message}");
         }
     }
     
