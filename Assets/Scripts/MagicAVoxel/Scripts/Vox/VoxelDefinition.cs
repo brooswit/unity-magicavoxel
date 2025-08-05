@@ -69,8 +69,8 @@ public class VoxelDefinition : MonoBehaviour
         
         try
         {
-            GenerateDefaultPaletteMeshes(_cachedVoxData);
-            GenerateExtraPaletteMeshes(_cachedVoxData);
+            GenerateDefaultPaletteMeshes();
+            GenerateExtraPaletteMeshes();
         }
         catch (System.Exception ex)
         {
@@ -80,20 +80,20 @@ public class VoxelDefinition : MonoBehaviour
     
 
     
-    private void GenerateDefaultPaletteMeshes(VoxData voxData)
+    private void GenerateDefaultPaletteMeshes()
     {
-        if (voxData?.models == null || voxData.palette == null) return;
+        if (_cachedVoxData?.models == null || _cachedVoxData.palette == null) return;
         
         string paletteName = "default";
         
-        for (int frameIndex = 0; frameIndex < voxData.models.Length; frameIndex++)
+        for (int frameIndex = 0; frameIndex < _cachedVoxData.models.Length; frameIndex++)
         {
             var key = (paletteName, frameIndex);
             if (!_meshCache.ContainsKey(key))
             {
                 try
                 {
-                    var mesh = VoxTools.GenerateMesh(voxData.models[frameIndex], voxData.palette);
+                    var mesh = VoxTools.GenerateMesh(_cachedVoxData.models[frameIndex], _cachedVoxData.palette);
                     if (mesh != null)
                     {
                         mesh.name = $"VoxelMesh_{voxAsset.name}_{paletteName}_{frameIndex}";
@@ -108,9 +108,9 @@ public class VoxelDefinition : MonoBehaviour
         }
     }
     
-    private void GenerateExtraPaletteMeshes(VoxData voxData)
+    private void GenerateExtraPaletteMeshes()
     {
-        if (voxData?.models == null || extraPalettes == null) return;
+        if (_cachedVoxData?.models == null || extraPalettes == null) return;
         
         for (int i = 0; i < extraPalettes.Length; i++)
         {
@@ -128,12 +128,12 @@ public class VoxelDefinition : MonoBehaviour
                 var palette = CreatePaletteFromTexture(paletteTexture);
                 if (palette == null) continue;
                 
-                for (int frameIndex = 0; frameIndex < voxData.models.Length; frameIndex++)
+                for (int frameIndex = 0; frameIndex < _cachedVoxData.models.Length; frameIndex++)
                 {
                     var key = (paletteName, frameIndex);
                     if (!_meshCache.ContainsKey(key))
                     {
-                        var mesh = VoxTools.GenerateMesh(voxData.models[frameIndex], palette);
+                        var mesh = VoxTools.GenerateMesh(_cachedVoxData.models[frameIndex], palette);
                         if (mesh != null)
                         {
                             mesh.name = $"VoxelMesh_{voxAsset.name}_{paletteName}_{frameIndex}";
