@@ -166,13 +166,13 @@ public class VoxelMeshSelector : MonoBehaviour
     }
     
     /// <summary>
-    /// Creates a custom palette with color overrides specific to this selector.
+    /// Creates a temporary custom palette with color overrides specific to this selector.
     /// The palette will be automatically cleaned up when this component is destroyed.
     /// </summary>
     /// <param name="colorOverrides">Dictionary of palette index to color overrides</param>
     /// <param name="name">Optional name for the palette (defaults to UUID)</param>
-    /// <returns>Name of the created custom palette</returns>
-    public string CustomPalette(Dictionary<int, Color> colorOverrides, string name = null)
+    /// <returns>Name of the created temporary custom palette</returns>
+    public string TemporaryCustomPalette(Dictionary<int, Color> colorOverrides, string name = null)
     {
         if (voxelDefinition == null)
         {
@@ -217,53 +217,18 @@ public class VoxelMeshSelector : MonoBehaviour
     /// </summary>
     public string GetCurrentPalette() => _paletteName;
     
-    /// <summary>
-    /// Gets the total number of available frames.
-    /// </summary>
-    public int GetFrameCount()
-    {
-        return voxelDefinition?.GetFrameCount() ?? 0;
-    }
+
     
     /// <summary>
-    /// Gets all available palette names.
+    /// Gets the VoxelDefinition reference used by this selector.
     /// </summary>
-    public string[] GetAvailablePalettes()
+    /// <returns>The VoxelDefinition component, or null if not assigned</returns>
+    public VoxelDefinition GetVoxelDefinition()
     {
-        return voxelDefinition?.GetAvailablePalettes() ?? new string[0];
+        return voxelDefinition;
     }
     
-    /// <summary>
-    /// Cycles to the next frame (wraps around to 0 at the end).
-    /// </summary>
-    public void NextFrame()
-    {
-        int frameCount = GetFrameCount();
-        if (frameCount > 0)
-        {
-            SelectFrame((_frame + 1) % frameCount);
-        }
-    }
-    
-    /// <summary>
-    /// Cycles to the previous frame (wraps around to the last frame at the beginning).
-    /// </summary>
-    public void PreviousFrame()
-    {
-        int frameCount = GetFrameCount();
-        if (frameCount > 0)
-        {
-            SelectFrame(_frame > 0 ? _frame - 1 : frameCount - 1);
-        }
-    }
-    
-    /// <summary>
-    /// Returns to the default palette.
-    /// </summary>
-    public void ResetToDefaultPalette()
-    {
-        SelectPalette("default");
-    }
+
     
     void OnDestroy()
     {

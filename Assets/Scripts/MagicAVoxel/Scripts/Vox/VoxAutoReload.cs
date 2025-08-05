@@ -15,17 +15,31 @@ public class VoxAutoReload : AssetPostprocessor
         {
             if (Path.GetExtension(assetPath).Equals(".vox", System.StringComparison.OrdinalIgnoreCase))
             {
-                // Find all VoxelController components in the scene instead of using static list
-                VoxelController[] allModels = FindObjectsOfType<VoxelController>();
-                foreach (VoxelController voxelController in allModels)
+                // Find all VoxelDefinition components in the scene
+                VoxelDefinition[] allDefinitions = FindObjectsOfType<VoxelDefinition>();
+                foreach (VoxelDefinition voxelDefinition in allDefinitions)
                 {
-                    bool shouldReloadModel = voxelController.voxAsset == null || 
-                        AssetDatabase.GetAssetPath(voxelController.voxAsset) == assetPath;
+                    bool shouldReloadModel = voxelDefinition.voxAsset == null || 
+                        AssetDatabase.GetAssetPath(voxelDefinition.voxAsset) == assetPath;
                     
                     if (shouldReloadModel)
                     {
-                        voxelController.LoadVoxelModel();
-                        EditorUtility.SetDirty(voxelController);
+                        // Clear the definition's cache and reinitialize
+                        voxelDefinition.OnValidate();
+                        EditorUtility.SetDirty(voxelDefinition);
+                    }
+                }
+                
+                // Also update any VoxelMeshSelectors that might be affected
+                VoxelMeshSelector[] allSelectors = FindObjectsOfType<VoxelMeshSelector>();
+                foreach (VoxelMeshSelector selector in allSelectors)
+                {
+                    if (selector.GetVoxelDefinition() != null && 
+                        selector.GetVoxelDefinition().voxAsset != null &&
+                        AssetDatabase.GetAssetPath(selector.GetVoxelDefinition().voxAsset) == assetPath)
+                    {
+                        // The selector will automatically update when its VoxelDefinition updates
+                        EditorUtility.SetDirty(selector);
                     }
                 }
             }
