@@ -43,6 +43,7 @@ public class VoxelMeshSelector : MonoBehaviour
     // Previous values for change detection
     private int _previousFrame = -1;
     private string _previousPaletteName = string.Empty;
+    private bool _previousHasRigidbody = false;
     
     //=========================================================================
     // Public properties
@@ -96,6 +97,17 @@ public class VoxelMeshSelector : MonoBehaviour
         if (_paletteName != _previousPaletteName)
         {
             SelectPalette(_paletteName);
+        }
+        
+        // Check for Rigidbody changes if collider updates are enabled
+        if (_updateCollider && _meshCollider != null)
+        {
+            bool currentHasRigidbody = GetComponent<Rigidbody>() != null;
+            if (currentHasRigidbody != _previousHasRigidbody)
+            {
+                UpdateCollider();
+                _previousHasRigidbody = currentHasRigidbody;
+            }
         }
     }
     
@@ -303,6 +315,9 @@ public class VoxelMeshSelector : MonoBehaviour
         // Set convex property based on settings and Rigidbody presence
         bool hasRigidbody = GetComponent<Rigidbody>() != null;
         _meshCollider.convex = _convexCollider || hasRigidbody;
+        
+        // Update tracking variable
+        _previousHasRigidbody = hasRigidbody;
     }
     
     private void AssignDefaultMaterial()
