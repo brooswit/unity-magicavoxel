@@ -404,65 +404,7 @@ public class VoxelDefinition : MonoBehaviour
         return palette;
     }
     
-    /// <summary>
-    /// Gets cache statistics for debugging purposes.
-    /// </summary>
-    public (int meshCount, int paletteCount) GetCacheStats()
-    {
-        var paletteNames = new HashSet<string>();
-        foreach (var key in _meshCache.Keys)
-        {
-            paletteNames.Add(key.Item1);
-        }
-        
-        return (_meshCache.Count, paletteNames.Count);
-    }
-    
-    /// <summary>
-    /// Logs detailed cache information for debugging.
-    /// </summary>
-    public void LogCacheStats()
-    {
-        var stats = GetCacheStats();
-        Debug.Log($"VoxelDefinition '{name}': {stats.meshCount} cached meshes across {stats.paletteCount} palettes");
-        
-        var paletteBreakdown = new Dictionary<string, int>();
-        foreach (var key in _meshCache.Keys)
-        {
-            paletteBreakdown[key.Item1] = paletteBreakdown.GetValueOrDefault(key.Item1, 0) + 1;
-        }
-        
-        foreach (var kvp in paletteBreakdown)
-        {
-            Debug.Log($"  - Palette '{kvp.Key}': {kvp.Value} meshes");
-        }
-    }
-    
-    /// <summary>
-    /// Clears cached meshes for a specific frame across all palettes.
-    /// </summary>
-    /// <param name="frameIndex">Frame index to clear</param>
-    public void ClearFrame(int frameIndex)
-    {
-        var keysToRemove = new List<(string, int)>();
-        
-        foreach (var key in _meshCache.Keys)
-        {
-            if (key.Item2 == frameIndex)
-            {
-                keysToRemove.Add(key);
-            }
-        }
-        
-        foreach (var key in keysToRemove)
-        {
-            if (_meshCache.TryGetValue(key, out var mesh) && mesh != null)
-            {
-                DestroyImmediate(mesh);
-            }
-            _meshCache.Remove(key);
-        }
-    }
+
     
     /// <summary>
     /// Forces a refresh of all cached meshes.
