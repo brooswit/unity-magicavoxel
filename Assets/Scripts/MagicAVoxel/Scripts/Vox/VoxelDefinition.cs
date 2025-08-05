@@ -33,6 +33,9 @@ public class VoxelDefinition : MonoBehaviour
     // Track custom palettes for cleanup
     private HashSet<string> _customPaletteNames = new HashSet<string>();
     
+    // Event fired when cache is reinitialized (for dependent components)
+    public System.Action OnCacheReinitialized;
+    
     //=========================================================================
     // Unity lifecycle methods
     void Awake()
@@ -165,7 +168,7 @@ public class VoxelDefinition : MonoBehaviour
     }
 
     //-------------------------------------------------------------------------
-    // Mesh Management
+    // Information & Queries
 
     /// <summary>
     /// Gets a cached mesh for the specified frame and palette.
@@ -181,9 +184,6 @@ public class VoxelDefinition : MonoBehaviour
         var key = (paletteName, frame);
         return _meshCache.TryGetValue(key, out var mesh) ? mesh : null;
     }
-
-    //-------------------------------------------------------------------------
-    // Information & Queries
 
     /// <summary>
     /// Gets the number of available frames in the voxel data.
@@ -248,6 +248,9 @@ public class VoxelDefinition : MonoBehaviour
         {
             Debug.LogError($"VoxelDefinition '{name}': Failed to generate extra palette meshes - {ex.Message}");
         }
+        
+        // Notify dependent components that cache has been reinitialized
+        OnCacheReinitialized?.Invoke();
     }
 
     //-------------------------------------------------------------------------

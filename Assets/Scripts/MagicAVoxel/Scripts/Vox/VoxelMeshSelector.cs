@@ -69,6 +69,7 @@ public class VoxelMeshSelector : MonoBehaviour
     
     void Start()
     {
+        SubscribeToVoxelDefinitionEvents();
         UpdateMesh();
     }
     
@@ -89,6 +90,7 @@ public class VoxelMeshSelector : MonoBehaviour
     void OnValidate()
     {
         InitializeComponents();
+        SubscribeToVoxelDefinitionEvents();
         UpdateMesh();
     }
     
@@ -288,10 +290,38 @@ public class VoxelMeshSelector : MonoBehaviour
         return voxelDefinition;
     }
     
+    private void SubscribeToVoxelDefinitionEvents()
+    {
+        // Unsubscribe first to avoid duplicate subscriptions
+        UnsubscribeFromVoxelDefinitionEvents();
+        
+        if (voxelDefinition != null)
+        {
+            voxelDefinition.OnCacheReinitialized += OnVoxelDefinitionCacheReinitialized;
+        }
+    }
+    
+    private void UnsubscribeFromVoxelDefinitionEvents()
+    {
+        if (voxelDefinition != null)
+        {
+            voxelDefinition.OnCacheReinitialized -= OnVoxelDefinitionCacheReinitialized;
+        }
+    }
+    
+    private void OnVoxelDefinitionCacheReinitialized()
+    {
+        // VoxelDefinition has reinitialized its cache, refresh our mesh
+        UpdateMesh();
+    }
+    
 
     
     void OnDestroy()
     {
+        // Unsubscribe from VoxelDefinition events
+        UnsubscribeFromVoxelDefinitionEvents();
+        
         // Clean up all custom palettes created by this selector
         if (voxelDefinition != null)
         {
