@@ -405,15 +405,7 @@ public class VoxelDefinition : MonoBehaviour
     }
     
 
-    
-    /// <summary>
-    /// Forces a refresh of all cached meshes.
-    /// </summary>
-    public void RefreshCache()
-    {
-        ClearAllCaches();
-        InitializeCache();
-    }
+
 
     void OnDestroy()
     {
