@@ -9,6 +9,9 @@ using System;
 [ExecuteInEditMode]
 public class VoxelDefinition : MonoBehaviour
 {
+    //=========================================================================
+    // Public variables
+
     [Header("Voxel Data")]
     [Tooltip("Reference to the imported .vox file")]
     public VoxAsset voxAsset;
@@ -17,9 +20,9 @@ public class VoxelDefinition : MonoBehaviour
     [Tooltip("Array of additional palette textures")]
     public Texture2D[] extraPalettes = new Texture2D[0];
     
-    //-------------------------------------------------------------------------
+    //=========================================================================
     // Internal variables
-    //-------------------------------------------------------------------------
+
     // Internal cache for mesh data per palette and frame
     // Key: (paletteName, frameIndex), Value: Mesh
     private Dictionary<(string, int), Mesh> _meshCache = new Dictionary<(string, int), Mesh>();
@@ -30,9 +33,8 @@ public class VoxelDefinition : MonoBehaviour
     // Track custom palettes for cleanup
     private HashSet<string> _customPaletteNames = new HashSet<string>();
     
-    //-------------------------------------------------------------------------
+    //=========================================================================
     // Unity lifecycle methods
-    //-------------------------------------------------------------------------
     void Awake()
     {
         InitializeCache();
@@ -55,10 +57,12 @@ public class VoxelDefinition : MonoBehaviour
         ClearAllCaches();
     }
     
-    //-------------------------------------------------------------------------
+    //=========================================================================
     // Public methods
-    //-------------------------------------------------------------------------
     
+    //-------------------------------------------------------------------------
+    // Palette Management
+
     /// <summary>
     /// Registers a new palette and caches meshes for all frames using that palette.
     /// </summary>
@@ -159,7 +163,10 @@ public class VoxelDefinition : MonoBehaviour
         // Remove from custom palette tracking
         _customPaletteNames.Remove(paletteName);
     }
-    
+
+    //-------------------------------------------------------------------------
+    // Mesh Management
+
     /// <summary>
     /// Gets a cached mesh for the specified frame and palette.
     /// </summary>
@@ -174,7 +181,10 @@ public class VoxelDefinition : MonoBehaviour
         var key = (paletteName, frame);
         return _meshCache.TryGetValue(key, out var mesh) ? mesh : null;
     }
-    
+
+    //-------------------------------------------------------------------------
+    // Information & Queries
+
     /// <summary>
     /// Gets the number of available frames in the voxel data.
     /// </summary>
@@ -198,9 +208,11 @@ public class VoxelDefinition : MonoBehaviour
         return new List<string>(palettes).ToArray();
     }
     
-    //-------------------------------------------------------------------------
+    //=========================================================================
     // Private methods
+    
     //-------------------------------------------------------------------------
+    // Initialization
     
     private void InitializeCache()
     {
@@ -237,6 +249,9 @@ public class VoxelDefinition : MonoBehaviour
             Debug.LogError($"VoxelDefinition '{name}': Failed to generate extra palette meshes - {ex.Message}");
         }
     }
+
+    //-------------------------------------------------------------------------
+    // Mesh Generation
     
     private void GenerateDefaultPaletteMeshes()
     {
@@ -297,6 +312,9 @@ public class VoxelDefinition : MonoBehaviour
             }
         }
     }
+
+    //-------------------------------------------------------------------------
+    // Cleanup
     
     private void ClearAllCaches()
     {
