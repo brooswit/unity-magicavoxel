@@ -5,38 +5,33 @@ public class VoxData
 {
     public VoxPalette palette;
     public VoxModel[] models;
-    public Mesh[] meshes;
     
     public VoxData()
     {
         palette = new VoxPalette();
         models = new VoxModel[0];
-        meshes = new Mesh[0];
     }
     
-    public VoxData(VoxPalette palette, VoxModel[] models, Mesh[] meshes)
+    public VoxData(VoxPalette palette, VoxModel[] models)
     {
         this.palette = palette ?? new VoxPalette();
         this.models = models ?? new VoxModel[0];
-        this.meshes = meshes ?? new Mesh[0];
     }
     
     // Constructor with Color32[] for backward compatibility
-    public VoxData(Color32[] paletteColors, VoxModel[] models, Mesh[] meshes)
+    public VoxData(Color32[] paletteColors, VoxModel[] models)
     {
         this.palette = new VoxPalette(paletteColors);
         this.models = models ?? new VoxModel[0];
-        this.meshes = meshes ?? new Mesh[0];
     }
     
-    // Constructor from raw .vox file data - handles entire pipeline
+    // Constructor from raw .vox file data - handles parsing only
     public VoxData(byte[] rawVoxData)
     {
         if (rawVoxData == null || rawVoxData.Length == 0)
         {
             palette = new VoxPalette();
             models = new VoxModel[0];
-            meshes = new Mesh[0];
             return;
         }
         
@@ -48,21 +43,12 @@ public class VoxData
             // Parsing failed - create empty data
             palette = new VoxPalette();
             models = new VoxModel[0];
-            meshes = new Mesh[0];
             return;
         }
         
-        // Store parsed data
+        // Store parsed data only - no mesh generation
         palette = parsedPalette;
         models = parsedModels;
-        
-        // Generate meshes for all models
-        meshes = new Mesh[models.Length];
-        for (int i = 0; i < models.Length; i++)
-        {
-            meshes[i] = VoxTools.GenerateMesh(models[i], palette);
-            meshes[i].name = $"VoxMesh_{i}";
-        }
     }
     
     // Copy constructor - clones another VoxData
@@ -72,7 +58,6 @@ public class VoxData
         {
             palette = new VoxPalette();
             models = new VoxModel[0];
-            meshes = new Mesh[0];
             return;
         }
         
@@ -82,9 +67,5 @@ public class VoxData
         // Clone models array (shallow copy - VoxModel instances are shared)
         models = new VoxModel[other.models.Length];
         System.Array.Copy(other.models, models, other.models.Length);
-        
-        // Clone meshes array (shallow copy - Mesh instances are shared)
-        meshes = new Mesh[other.meshes.Length];
-        System.Array.Copy(other.meshes, meshes, other.meshes.Length);
     }
 } 

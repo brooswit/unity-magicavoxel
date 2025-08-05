@@ -2,42 +2,69 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-// Static mesh cache for alternate palette meshes
-// Pre-generated meshes from VoxAsset are used directly without caching
-public static class VoxelMeshCache
+// Static mesh cache for just-in-time generated meshes
+public static class VoxMeshCache
 {
-    // Cache key: (VoxAsset hash, Texture2D hash, model index) - only for alternate palettes
+    // Cache key: (VoxAsset hash, Texture2D hash, model index)
     private static Dictionary<(int, int, int), Mesh> _meshCache = new Dictionary<(int, int, int), Mesh>();
+    
+    // Cache for parsed VoxData to avoid re-parsing the same asset
+    private static Dictionary<int, VoxData> _parsedDataCache = new Dictionary<int, VoxData>();
     
     public static Mesh GetOrCreateMesh(VoxAsset voxAsset, Texture2D paletteTexture, int modelIndex)
     {
-        // If no alternate palette, use the pre-generated mesh from the asset (no caching needed)
-        if (paletteTexture == null)
-        {
-            if (voxAsset?.data?.meshes != null && modelIndex >= 0 && modelIndex < voxAsset.data.meshes.Length)
-                return voxAsset.data.meshes[modelIndex];
+        if (voxAsset?.rawData == null)
             return null;
-        }
         
-        // Alternate palette: use cache for generated meshes
-        int assetHash = voxAsset != null ? voxAsset.GetHashCode() : 0;
-        int textureHash = paletteTexture.GetHashCode();
+        // Parse the vox data if not already cached
+        var voxData = GetParsedData(voxAsset);
+        if (voxData?.models == null || modelIndex < 0 || modelIndex >= voxData.models.Length)
+            return null;
+        
+        // Generate cache key based on asset and palette
+        int assetHash = voxAsset.GetHashCode();
+        int textureHash = paletteTexture != null ? paletteTexture.GetHashCode() : 0;
         var key = (assetHash, textureHash, modelIndex);
         
         // Check cache first
         if (_meshCache.TryGetValue(key, out var cachedMesh) && cachedMesh != null)
             return cachedMesh;
         
-        // Generate new mesh with alternate palette
-        var alternatePalette = CreatePaletteFromTexture(paletteTexture);
-        var mesh = VoxTools.GenerateMesh(voxAsset.data.models[modelIndex], alternatePalette);
+        // Generate new mesh just-in-time
+        VoxPalette palette;
+        string meshName;
         
-        // Set descriptive name
-        mesh.name = $"VoxelMesh_{voxAsset.name}_{paletteTexture.name}_{modelIndex}";
+        if (paletteTexture == null)
+        {
+            // Use original palette from asset
+            palette = voxData.palette;
+            meshName = $"VoxelMesh_{voxAsset.name}_{modelIndex}";
+        }
+        else
+        {
+            // Use alternate palette from texture
+            palette = CreatePaletteFromTexture(paletteTexture);
+            meshName = $"VoxelMesh_{voxAsset.name}_{paletteTexture.name}_{modelIndex}";
+        }
+        
+        var mesh = VoxTools.GenerateMesh(voxData.models[modelIndex], palette);
+        mesh.name = meshName;
         
         // Cache and return
         _meshCache[key] = mesh;
         return mesh;
+    }
+
+    private static VoxData GetParsedData(VoxAsset voxAsset)
+    {
+        int assetHash = voxAsset.GetHashCode();
+        
+        if (_parsedDataCache.TryGetValue(assetHash, out var cachedData))
+            return cachedData;
+        
+        var voxData = new VoxData(voxAsset.rawData);
+        _parsedDataCache[assetHash] = voxData;
+        return voxData;
     }
     
 
@@ -77,6 +104,7 @@ public static class VoxelMeshCache
         foreach (var mesh in _meshCache.Values)
             if (mesh != null) Object.DestroyImmediate(mesh);
         _meshCache.Clear();
+        _parsedDataCache.Clear();
     }
     
     public static void ClearAssetCache(VoxAsset voxAsset)
@@ -91,17 +119,14 @@ public static class VoxelMeshCache
             if (_meshCache[key] != null) Object.DestroyImmediate(_meshCache[key]);
             _meshCache.Remove(key);
         }
+        
+        // Also clear parsed data cache for this asset
+        _parsedDataCache.Remove(assetHash);
     }
     
     public static void ClearPaletteCache(Texture2D paletteTexture)
     {
-        if (paletteTexture == null) 
-        {
-            // No cached meshes for null palette (uses pre-generated meshes)
-            return;
-        }
-        
-        int textureHash = paletteTexture.GetHashCode();
+        int textureHash = paletteTexture != null ? paletteTexture.GetHashCode() : 0;
         var keysToRemove = _meshCache.Keys.Where(k => k.Item2 == textureHash).ToList();
         
         foreach (var key in keysToRemove)
@@ -113,9 +138,10 @@ public static class VoxelMeshCache
     
     // Debug info
     public static int CacheSize => _meshCache.Count;
+    public static int ParsedDataCacheSize => _parsedDataCache.Count;
     
     public static void LogCacheStats()
     {
-        Debug.Log($"VoxelMeshCache: {_meshCache.Count} cached meshes");
+        Debug.Log($"VoxMeshCache: {_meshCache.Count} cached meshes, {_parsedDataCache.Count} parsed data entries");
     }
 } 

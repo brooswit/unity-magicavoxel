@@ -1,0 +1,281 @@
+using System.Collections.Generic;
+using UnityEngine;
+
+/// <summary>
+/// VoxelMeshSelector selects and displays specific frames and palettes from a VoxelDefinition.
+/// This component handles mesh assignment and automatic synchronization.
+/// </summary>
+[RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
+public class VoxelMeshSelector : MonoBehaviour
+{
+    [Header("Voxel Configuration")]
+    [Tooltip("Reference to the VoxelDefinition that manages the voxel data")]
+    public VoxelDefinition voxelDefinition;
+    
+    [Tooltip("Frame index to display")]
+    [SerializeField] private int _frame = 0;
+    
+    [Tooltip("Name of the palette to use")]
+    [SerializeField] private string _paletteName = "default";
+    
+    // Mesh components
+    private MeshFilter _meshFilter;
+    private MeshRenderer _meshRenderer;
+    private MeshCollider _meshCollider;
+    
+    // Track custom palettes created by this selector for cleanup
+    private HashSet<string> _ownedCustomPalettes = new HashSet<string>();
+    
+    // Previous values for change detection
+    private int _previousFrame = -1;
+    private string _previousPaletteName = string.Empty;
+    
+    public int Frame
+    {
+        get => _frame;
+        set => SelectFrame(value);
+    }
+    
+    public string PaletteName
+    {
+        get => _paletteName;
+        set => SelectPalette(value);
+    }
+    
+    void Awake()
+    {
+        InitializeComponents();
+    }
+    
+    void Start()
+    {
+        UpdateMesh();
+    }
+    
+    void Update()
+    {
+        // Check for external changes to frame or palette
+        if (_frame != _previousFrame)
+        {
+            SelectFrame(_frame);
+        }
+        
+        if (_paletteName != _previousPaletteName)
+        {
+            SelectPalette(_paletteName);
+        }
+    }
+    
+    void OnValidate()
+    {
+        InitializeComponents();
+        UpdateMesh();
+    }
+    
+    private void InitializeComponents()
+    {
+        _meshFilter = _meshFilter ?? GetComponent<MeshFilter>();
+        _meshRenderer = _meshRenderer ?? GetComponent<MeshRenderer>();
+        _meshCollider = GetComponent<MeshCollider>(); // Optional component
+        
+        // Assign default shader if no material is set
+        if (_meshRenderer != null && _meshRenderer.sharedMaterial == null)
+        {
+            Shader shader = Shader.Find("Custom/VertexColorShader");
+            if (shader != null)
+            {
+                Material material = new Material(shader);
+                _meshRenderer.sharedMaterial = material;
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Updates the mesh based on current frame and palette settings.
+    /// This is called internally when frame or palette changes.
+    /// </summary>
+    private void UpdateMesh()
+    {
+        if (voxelDefinition == null)
+        {
+            Debug.LogWarning("VoxelMeshSelector: No VoxelDefinition assigned");
+            ClearMesh();
+            return;
+        }
+        
+        var mesh = voxelDefinition.GetMesh(_frame, _paletteName);
+        
+        if (mesh != null)
+        {
+            _meshFilter.sharedMesh = mesh;
+            
+            // Update collider if present
+            if (_meshCollider != null)
+            {
+                _meshCollider.sharedMesh = null;
+                _meshCollider.sharedMesh = mesh;
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"VoxelMeshSelector: No mesh found for frame {_frame} and palette '{_paletteName}'");
+            ClearMesh();
+        }
+        
+        // Update tracking variables
+        _previousFrame = _frame;
+        _previousPaletteName = _paletteName;
+    }
+    
+    private void ClearMesh()
+    {
+        if (_meshFilter != null)
+            _meshFilter.sharedMesh = null;
+        
+        if (_meshCollider != null)
+            _meshCollider.sharedMesh = null;
+    }
+    
+    /// <summary>
+    /// Selects a specific frame and updates the mesh.
+    /// </summary>
+    /// <param name="frame">Frame index to select</param>
+    public void SelectFrame(int frame)
+    {
+        if (voxelDefinition != null)
+        {
+            int frameCount = voxelDefinition.GetFrameCount();
+            _frame = Mathf.Clamp(frame, 0, Mathf.Max(0, frameCount - 1));
+        }
+        else
+        {
+            _frame = Mathf.Max(0, frame);
+        }
+        
+        UpdateMesh();
+    }
+    
+    /// <summary>
+    /// Selects a specific palette and updates the mesh.
+    /// </summary>
+    /// <param name="paletteName">Name of the palette to select</param>
+    public void SelectPalette(string paletteName)
+    {
+        _paletteName = string.IsNullOrEmpty(paletteName) ? "default" : paletteName;
+        UpdateMesh();
+    }
+    
+    /// <summary>
+    /// Creates a custom palette with color overrides specific to this selector.
+    /// The palette will be automatically cleaned up when this component is destroyed.
+    /// </summary>
+    /// <param name="colorOverrides">Dictionary of palette index to color overrides</param>
+    /// <param name="name">Optional name for the palette (defaults to UUID)</param>
+    /// <returns>Name of the created custom palette</returns>
+    public string CustomPalette(Dictionary<int, Color> colorOverrides, string name = null)
+    {
+        if (voxelDefinition == null)
+        {
+            Debug.LogError("VoxelMeshSelector: No VoxelDefinition assigned");
+            return string.Empty;
+        }
+        
+        if (colorOverrides == null || colorOverrides.Count == 0)
+        {
+            Debug.LogError("VoxelMeshSelector: Color overrides cannot be null or empty");
+            return string.Empty;
+        }
+        
+        // Generate unique name if not provided
+        if (string.IsNullOrEmpty(name))
+        {
+            name = $"{gameObject.name}_{System.Guid.NewGuid().ToString("N")[..8]}";
+        }
+        
+        // Create the custom palette in the VoxelDefinition
+        string paletteName = voxelDefinition.CustomPalette(colorOverrides, name);
+        
+        if (!string.IsNullOrEmpty(paletteName))
+        {
+            // Track this palette for cleanup
+            _ownedCustomPalettes.Add(paletteName);
+            
+            // Automatically switch to the new palette
+            SelectPalette(paletteName);
+        }
+        
+        return paletteName;
+    }
+    
+    /// <summary>
+    /// Gets the current frame index.
+    /// </summary>
+    public int GetCurrentFrame() => _frame;
+    
+    /// <summary>
+    /// Gets the current palette name.
+    /// </summary>
+    public string GetCurrentPalette() => _paletteName;
+    
+    /// <summary>
+    /// Gets the total number of available frames.
+    /// </summary>
+    public int GetFrameCount()
+    {
+        return voxelDefinition?.GetFrameCount() ?? 0;
+    }
+    
+    /// <summary>
+    /// Gets all available palette names.
+    /// </summary>
+    public string[] GetAvailablePalettes()
+    {
+        return voxelDefinition?.GetAvailablePalettes() ?? new string[0];
+    }
+    
+    /// <summary>
+    /// Cycles to the next frame (wraps around to 0 at the end).
+    /// </summary>
+    public void NextFrame()
+    {
+        int frameCount = GetFrameCount();
+        if (frameCount > 0)
+        {
+            SelectFrame((_frame + 1) % frameCount);
+        }
+    }
+    
+    /// <summary>
+    /// Cycles to the previous frame (wraps around to the last frame at the beginning).
+    /// </summary>
+    public void PreviousFrame()
+    {
+        int frameCount = GetFrameCount();
+        if (frameCount > 0)
+        {
+            SelectFrame(_frame > 0 ? _frame - 1 : frameCount - 1);
+        }
+    }
+    
+    /// <summary>
+    /// Returns to the default palette.
+    /// </summary>
+    public void ResetToDefaultPalette()
+    {
+        SelectPalette("default");
+    }
+    
+    void OnDestroy()
+    {
+        // Clean up all custom palettes created by this selector
+        if (voxelDefinition != null)
+        {
+            foreach (string paletteName in _ownedCustomPalettes)
+            {
+                voxelDefinition.ClearPalette(paletteName);
+            }
+        }
+        
+        _ownedCustomPalettes.Clear();
+    }
+} 
