@@ -50,6 +50,11 @@ public class VoxelDefinition : MonoBehaviour
         InitializeCache();
     }
     
+    void OnDestroy()
+    {
+        ClearAllCaches();
+    }
+    
     private void InitializeCache()
     {
         if (voxAsset?.rawData == null) 
@@ -289,12 +294,5 @@ public class VoxelDefinition : MonoBehaviour
         _meshCache.Clear();
         _customPaletteNames.Clear();
         _cachedVoxData = null;
-    }
-    
-
-    
-    void OnDestroy()
-    {
-        ClearAllCaches();
     }
 } 
