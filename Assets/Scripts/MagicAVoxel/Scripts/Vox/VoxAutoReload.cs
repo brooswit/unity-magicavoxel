@@ -29,19 +29,6 @@ public class VoxAutoReload : AssetPostprocessor
                         EditorUtility.SetDirty(voxelDefinition);
                     }
                 }
-                
-                // Also update any VoxelMeshSelectors that might be affected
-                VoxelMeshSelector[] allSelectors = FindObjectsOfType<VoxelMeshSelector>();
-                foreach (VoxelMeshSelector selector in allSelectors)
-                {
-                    if (selector.GetVoxelDefinition() != null && 
-                        selector.GetVoxelDefinition().voxAsset != null &&
-                        AssetDatabase.GetAssetPath(selector.GetVoxelDefinition().voxAsset) == assetPath)
-                    {
-                        // The selector will automatically update when its VoxelDefinition updates
-                        EditorUtility.SetDirty(selector);
-                    }
-                }
             }
         }
     }
