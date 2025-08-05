@@ -104,7 +104,7 @@ public class VoxelDefinition : MonoBehaviour
             
             try
             {
-                var palette = CreatePaletteFromTexture(paletteTexture);
+                var palette = VoxPalette.CreateFromTexture(paletteTexture);
                 if (palette == null) continue;
                 
                 GenerateMeshesForAllFrames(paletteName, palette);
@@ -136,7 +136,7 @@ public class VoxelDefinition : MonoBehaviour
         }
         
         string paletteName = palette.name;
-        var voxPalette = CreatePaletteFromTexture(palette);
+        var voxPalette = VoxPalette.CreateFromTexture(palette);
         
         // Generate and cache meshes for all frames
         GenerateMeshesForAllFrames(paletteName, voxPalette);
@@ -291,21 +291,7 @@ public class VoxelDefinition : MonoBehaviour
         _cachedVoxData = null;
     }
     
-    private VoxPalette CreatePaletteFromTexture(Texture2D texture)
-    {
-        // This method should convert a Texture2D to VoxPalette
-        // Implementation depends on how VoxPalette works
-        var palette = new VoxPalette();
-        
-        // Assuming the texture is 16x16 with 256 colors arranged in a grid
-        Color32[] pixels = texture.GetPixels32();
-        for (int i = 0; i < Mathf.Min(pixels.Length, 256); i++)
-        {
-            palette[i] = pixels[i];
-        }
-        
-        return palette;
-    }
+
     
     void OnDestroy()
     {

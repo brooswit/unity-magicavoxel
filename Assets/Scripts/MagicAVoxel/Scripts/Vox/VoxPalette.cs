@@ -122,4 +122,21 @@ public class VoxPalette
     {
         return new VoxPalette();
     }
+    
+    // Create palette from Texture2D (static factory method)
+    public static VoxPalette CreateFromTexture(Texture2D texture)
+    {
+        if (texture == null) return new VoxPalette();
+        
+        var palette = new VoxPalette();
+        
+        // Assuming the texture is 16x16 with 256 colors arranged in a grid
+        Color32[] pixels = texture.GetPixels32();
+        for (int i = 0; i < Mathf.Min(pixels.Length, 256); i++)
+        {
+            palette[i] = pixels[i];
+        }
+        
+        return palette;
+    }
 } 
