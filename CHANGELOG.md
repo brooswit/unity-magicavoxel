@@ -19,7 +19,7 @@
 - Add: Comprehensive mesh caching system for different palettes and frames
 - Add: RegisterPalette method for image-based palette registration
 - Add: CustomPalette method with dictionary-based color overrides
-- Add: ClearPalette method for selective cache cleanup
+- Add: RemovePalette method for selective cache cleanup
 - Add: GetMesh method for cached mesh retrieval
 - Add: Automatic frame/palette synchronization in VoxelMeshSelector
 - Add: Custom palette cleanup on component destruction

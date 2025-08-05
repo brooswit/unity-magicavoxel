@@ -297,7 +297,7 @@ public class VoxelMeshSelector : MonoBehaviour
         {
             foreach (string paletteName in _ownedCustomPalettes)
             {
-                voxelDefinition.ClearPalette(paletteName);
+                voxelDefinition.RemovePalette(paletteName);
             }
         }
         

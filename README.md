@@ -31,9 +31,9 @@ A MonoBehaviour component that manages voxel model data and palette caching.
 - Caches meshes for all model frames using the custom palette
 - Returns the custom palette name
 
-#### `clearPalette(string paletteName) → void`
+#### `removePalette(string paletteName) → void`
 - Takes a palette name as input
-- Clears the cached model frames for the specified palette
+- Removes the cached model frames for the specified palette
 
 #### `getMesh(int frame, string paletteName = null) → Mesh`
 - Takes a frame index and optional palette name
@@ -64,7 +64,7 @@ A component that selects and displays specific frames and palettes from a VoxelD
 #### `customPalette(Dictionary<int, Color> overrides, string name = null) → string`
 - Calls the VoxelDefinition's `customPalette()` method
 - Tracks created custom palettes for cleanup
-- When the VoxelMeshSelector is destroyed, automatically calls `clearPalette()` for all custom palettes created by this component
+- When the VoxelMeshSelector is destroyed, automatically calls `removePalette()` for all custom palettes created by this component
 
 **Automatic Updates:**
 - If frame or palette values are changed outside of the `selectFrame()` or `selectPalette()` methods, the component automatically calls the appropriate method with the new values to maintain synchronization.

@@ -187,10 +187,10 @@ public class VoxelDefinition : MonoBehaviour
     }
     
     /// <summary>
-    /// Clears cached model frames for the specified palette.
+    /// Removes cached model frames for the specified palette.
     /// </summary>
-    /// <param name="paletteName">Name of the palette to clear</param>
-    public void ClearPalette(string paletteName)
+    /// <param name="paletteName">Name of the palette to remove</param>
+    public void RemovePalette(string paletteName)
     {
         if (string.IsNullOrEmpty(paletteName)) return;
         
