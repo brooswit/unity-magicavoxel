@@ -55,79 +55,9 @@ public class VoxelDefinition : MonoBehaviour
         ClearAllCaches();
     }
     
-    private void InitializeCache()
-    {
-        if (voxAsset?.rawData == null) 
-        {
-            Debug.LogWarning($"VoxelDefinition '{name}': No voxAsset or rawData assigned");
-            return;
-        }
-        
-        // Parse VoxData upfront
-        _cachedVoxData = new VoxData(voxAsset.rawData);
-        
-        if (_cachedVoxData?.models == null || _cachedVoxData.models.Length == 0) 
-        {
-            Debug.LogWarning($"VoxelDefinition '{name}': Failed to parse vox data or no models found");
-            return;
-        }
-        
-        try
-        {
-            GenerateDefaultPaletteMeshes();
-        }
-        catch (System.Exception ex)
-        {
-            Debug.LogError($"VoxelDefinition '{name}': Failed to generate default palette meshes - {ex.Message}");
-        }
-        
-        try
-        {
-            GenerateExtraPaletteMeshes();
-        }
-        catch (System.Exception ex)
-        {
-            Debug.LogError($"VoxelDefinition '{name}': Failed to generate extra palette meshes - {ex.Message}");
-        }
-    }
-    
-
-    
-    private void GenerateDefaultPaletteMeshes()
-    {
-        if (_cachedVoxData?.models == null || _cachedVoxData.palette == null) return;
-        
-        GenerateMeshesForAllFrames("default", _cachedVoxData.palette);
-    }
-    
-    private void GenerateExtraPaletteMeshes()
-    {
-        if (_cachedVoxData?.models == null || extraPalettes == null) return;
-        
-        for (int i = 0; i < extraPalettes.Length; i++)
-        {
-            var paletteTexture = extraPalettes[i];
-            if (paletteTexture == null) 
-            {
-                Debug.LogWarning($"VoxelDefinition '{name}': Extra palette at index {i} is null");
-                continue;
-            }
-            
-            string paletteName = string.IsNullOrEmpty(paletteTexture.name) ? $"palette_{i}" : paletteTexture.name;
-            
-            try
-            {
-                var palette = VoxPalette.CreateFromTexture(paletteTexture);
-                if (palette == null) continue;
-                
-                GenerateMeshesForAllFrames(paletteName, palette);
-            }
-            catch (System.Exception ex)
-            {
-                Debug.LogError($"VoxelDefinition '{name}': Failed to generate meshes for palette '{paletteName}' - {ex.Message}");
-            }
-        }
-    }
+    //-------------------------------------------------------------------------
+    // Public methods
+    //-------------------------------------------------------------------------
     
     /// <summary>
     /// Registers a new palette and caches meshes for all frames using that palette.
@@ -266,6 +196,82 @@ public class VoxelDefinition : MonoBehaviour
         }
         
         return new List<string>(palettes).ToArray();
+    }
+    
+    //-------------------------------------------------------------------------
+    // Private methods
+    //-------------------------------------------------------------------------
+    
+    private void InitializeCache()
+    {
+        if (voxAsset?.rawData == null) 
+        {
+            Debug.LogWarning($"VoxelDefinition '{name}': No voxAsset or rawData assigned");
+            return;
+        }
+        
+        // Parse VoxData upfront
+        _cachedVoxData = new VoxData(voxAsset.rawData);
+        
+        if (_cachedVoxData?.models == null || _cachedVoxData.models.Length == 0) 
+        {
+            Debug.LogWarning($"VoxelDefinition '{name}': Failed to parse vox data or no models found");
+            return;
+        }
+        
+        try
+        {
+            GenerateDefaultPaletteMeshes();
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"VoxelDefinition '{name}': Failed to generate default palette meshes - {ex.Message}");
+        }
+        
+        try
+        {
+            GenerateExtraPaletteMeshes();
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"VoxelDefinition '{name}': Failed to generate extra palette meshes - {ex.Message}");
+        }
+    }
+    
+    private void GenerateDefaultPaletteMeshes()
+    {
+        if (_cachedVoxData?.models == null || _cachedVoxData.palette == null) return;
+        
+        GenerateMeshesForAllFrames("default", _cachedVoxData.palette);
+    }
+    
+    private void GenerateExtraPaletteMeshes()
+    {
+        if (_cachedVoxData?.models == null || extraPalettes == null) return;
+        
+        for (int i = 0; i < extraPalettes.Length; i++)
+        {
+            var paletteTexture = extraPalettes[i];
+            if (paletteTexture == null) 
+            {
+                Debug.LogWarning($"VoxelDefinition '{name}': Extra palette at index {i} is null");
+                continue;
+            }
+            
+            string paletteName = string.IsNullOrEmpty(paletteTexture.name) ? $"palette_{i}" : paletteTexture.name;
+            
+            try
+            {
+                var palette = VoxPalette.CreateFromTexture(paletteTexture);
+                if (palette == null) continue;
+                
+                GenerateMeshesForAllFrames(paletteName, palette);
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"VoxelDefinition '{name}': Failed to generate meshes for palette '{paletteName}' - {ex.Message}");
+            }
+        }
     }
     
     private void GenerateMeshesForAllFrames(string paletteName, VoxPalette palette)
