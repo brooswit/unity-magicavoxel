@@ -17,17 +17,22 @@ public class VoxelDefinition : MonoBehaviour
     [Tooltip("Array of additional palette textures")]
     public Texture2D[] extraPalettes = new Texture2D[0];
     
+    //-------------------------------------------------------------------------
+    // Internal variables
+    //-------------------------------------------------------------------------
     // Internal cache for mesh data per palette and frame
     // Key: (paletteName, frameIndex), Value: Mesh
     private Dictionary<(string, int), Mesh> _meshCache = new Dictionary<(string, int), Mesh>();
     
-    // Cache for parsed vox data to avoid repeated parsing
+    // Cache for parsed vox data
     private VoxData _cachedVoxData;
-    private bool _dataCached = false;
     
     // Track custom palettes for cleanup
     private HashSet<string> _customPaletteNames = new HashSet<string>();
     
+    //-------------------------------------------------------------------------
+    // Unity lifecycle methods
+    //-------------------------------------------------------------------------
     void Awake()
     {
         InitializeCache();
@@ -53,8 +58,10 @@ public class VoxelDefinition : MonoBehaviour
             return;
         }
         
-        var voxData = GetParsedData();
-        if (voxData?.models == null || voxData.models.Length == 0) 
+        // Parse VoxData upfront
+        _cachedVoxData = new VoxData(voxAsset.rawData);
+        
+        if (_cachedVoxData?.models == null || _cachedVoxData.models.Length == 0) 
         {
             Debug.LogWarning($"VoxelDefinition '{name}': Failed to parse vox data or no models found");
             return;
@@ -62,11 +69,8 @@ public class VoxelDefinition : MonoBehaviour
         
         try
         {
-            // Generate meshes for default palette
-            GenerateDefaultPaletteMeshes(voxData);
-            
-            // Generate meshes for extra palettes
-            GenerateExtraPaletteMeshes(voxData);
+            GenerateDefaultPaletteMeshes(_cachedVoxData);
+            GenerateExtraPaletteMeshes(_cachedVoxData);
         }
         catch (System.Exception ex)
         {
@@ -76,14 +80,6 @@ public class VoxelDefinition : MonoBehaviour
     
     private VoxData GetParsedData()
     {
-        if (voxAsset?.rawData == null) return null;
-        
-        if (!_dataCached || _cachedVoxData == null)
-        {
-            _cachedVoxData = new VoxData(voxAsset.rawData);
-            _dataCached = true;
-        }
-        
         return _cachedVoxData;
     }
     
@@ -310,71 +306,6 @@ public class VoxelDefinition : MonoBehaviour
         return new List<string>(palettes).ToArray();
     }
     
-    /// <summary>
-    /// Creates a Texture2D representation of the specified palette.
-    /// Useful for cross-system compatibility and visual editing.
-    /// </summary>
-    /// <param name="paletteName">Name of the palette to convert to texture</param>
-    /// <returns>16x16 Texture2D with palette colors, or null if palette not found</returns>
-    public Texture2D CreatePaletteTexture(string paletteName = null)
-    {
-        if (string.IsNullOrEmpty(paletteName))
-            paletteName = "default";
-            
-        VoxPalette palette = null;
-        
-        // Get the appropriate palette
-        if (paletteName == "default")
-        {
-            var voxData = GetParsedData();
-            palette = voxData?.palette;
-        }
-        else
-        {
-            // For extra palettes, find by name
-            for (int i = 0; i < extraPalettes.Length; i++)
-            {
-                var paletteTexture = extraPalettes[i];
-                if (paletteTexture != null && paletteTexture.name == paletteName)
-                {
-                    palette = CreatePaletteFromTexture(paletteTexture);
-                    break;
-                }
-            }
-            
-            // For custom palettes, we'd need to store them... 
-            // This is a limitation of the current design
-        }
-        
-        if (palette == null)
-        {
-            Debug.LogWarning($"VoxelDefinition '{name}': Palette '{paletteName}' not found");
-            return null;
-        }
-        
-        return CreateTextureFromPalette(palette, paletteName);
-    }
-    
-    private Texture2D CreateTextureFromPalette(VoxPalette palette, string paletteName)
-    {
-        // Create 16x16 texture for easy visual editing
-        var texture = new Texture2D(16, 16, TextureFormat.RGBA32, false);
-        texture.filterMode = FilterMode.Point;
-        texture.name = paletteName;
-        
-        // Set palette colors
-        var colors = new Color32[256];
-        for (int i = 0; i < 256; i++)
-        {
-            colors[i] = palette[i];
-        }
-        
-        texture.SetPixels32(colors);
-        texture.Apply();
-        
-        return texture;
-    }
-    
     private void ClearAllCaches()
     {
         foreach (var mesh in _meshCache.Values)
@@ -384,7 +315,6 @@ public class VoxelDefinition : MonoBehaviour
         }
         _meshCache.Clear();
         _customPaletteNames.Clear();
-        _dataCached = false;
         _cachedVoxData = null;
     }
     
@@ -404,9 +334,6 @@ public class VoxelDefinition : MonoBehaviour
         return palette;
     }
     
-
-
-
     void OnDestroy()
     {
         ClearAllCaches();
