@@ -105,7 +105,7 @@ public class VoxelMeshSelector : MonoBehaviour
             bool currentHasRigidbody = GetComponent<Rigidbody>() != null;
             if (currentHasRigidbody != _previousHasRigidbody)
             {
-                UpdateCollider();
+                UpdateMeshCollider();
                 _previousHasRigidbody = currentHasRigidbody;
             }
         }
@@ -275,7 +275,7 @@ public class VoxelMeshSelector : MonoBehaviour
             // Update collider if enabled
             if (_updateCollider)
             {
-                UpdateCollider();
+                UpdateMeshCollider();
             }
         }
         else
@@ -298,7 +298,7 @@ public class VoxelMeshSelector : MonoBehaviour
             _meshCollider.sharedMesh = null;
     }
     
-    private void UpdateCollider()
+    private void UpdateMeshCollider()
     {
         if (_meshCollider == null)
         {
