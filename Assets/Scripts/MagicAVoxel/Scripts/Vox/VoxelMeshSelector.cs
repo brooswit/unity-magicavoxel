@@ -341,6 +341,7 @@ public class VoxelMeshSelector : MonoBehaviour
         
         // Try to find appropriate shader in order of preference
         string[] shaderNames = {
+            "Custom/VoxelBasicMultiLight", // Ultra-simple surface shader
             "Custom/VoxelFlatLitShader",
             "Custom/VoxelSimpleShader",
             "Custom/VertexColorShader",
