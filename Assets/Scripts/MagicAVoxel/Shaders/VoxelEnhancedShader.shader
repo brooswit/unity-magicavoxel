@@ -8,6 +8,7 @@ Shader "Custom/VoxelEnhancedShader"
         _AOStrength ("Ambient Occlusion", Range(0.0, 1.0)) = 0.3
         _RimPower ("Rim Light Power", Range(0.1, 8.0)) = 2.0
         _RimColor ("Rim Color", Color) = (1,1,1,0.5)
+        _UseVertexColors ("Use Vertex Colors", Range(0,1)) = 1
     }
     SubShader
     {
@@ -52,6 +53,7 @@ Shader "Custom/VoxelEnhancedShader"
                 float _AOStrength;
                 float _RimPower;
                 half4 _RimColor;
+                float _UseVertexColors;
             CBUFFER_END
 
             Varyings vert (Attributes input)
@@ -81,7 +83,7 @@ Shader "Custom/VoxelEnhancedShader"
                 float3 lightColor = mainLight.color;
 
                 // Base color with brightness and contrast adjustment
-                half4 baseColor = input.color;
+                half4 baseColor = lerp(_Color, input.color * _Color, _UseVertexColors);
                 baseColor.rgb = pow(baseColor.rgb * _Brightness, _Contrast);
 
                 // Quantized diffuse lighting for pixelated look
