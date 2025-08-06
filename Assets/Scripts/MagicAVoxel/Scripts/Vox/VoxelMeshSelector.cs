@@ -341,12 +341,13 @@ public class VoxelMeshSelector : MonoBehaviour
         
         // Try to find appropriate shader in order of preference
         string[] shaderNames = {
-            "Custom/VoxelBasicMultiLight", // Ultra-simple surface shader
+            "Custom/URPVertexColorLit",   // Correct, URP-compatible shader
             "Custom/VoxelFlatLitShader",
             "Custom/VoxelSimpleShader",
             "Custom/VertexColorShader",
             "Custom/VoxelEnhancedShader",
-            "Custom/VertexColorLitShader", 
+            "Custom/VertexColorLitShader",
+            "Universal Render Pipeline/Lit", // URP's default lit shader
             "Unlit/Color",
             "Standard"
         };
