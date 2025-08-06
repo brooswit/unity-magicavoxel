@@ -44,8 +44,8 @@ Shader "Custom/VoxelFlatLitShader"
 
             fixed4 frag (v2f i) : SV_Target
             {
-                // Simple directional lighting
-                float3 lightDir = normalize(float3(0.5, 1, 0.5));
+                // Use actual Unity main light direction
+                float3 lightDir = normalize(_WorldSpaceLightPos0.xyz);
                 float NdotL = dot(normalize(i.normal), lightDir) * 0.5 + 0.5;
                 return i.color * NdotL;
             }
