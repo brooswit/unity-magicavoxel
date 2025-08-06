@@ -39,10 +39,12 @@ Shader "Custom/VoxelFlatLitShader"
                 o.pos = UnityObjectToClipPos(v.vertex);
                 o.color = v.color * _Color;
                 
-                // Calculate lighting in vertex shader
+                // Calculate lighting using actual Unity main light
                 float3 worldNormal = UnityObjectToWorldNormal(v.normal);
-                float3 lightDir = float3(0.5, 1, 0.5); // Simple fixed light direction
-                float NdotL = dot(worldNormal, normalize(lightDir));
+                
+                // Use Unity's main directional light
+                float3 lightDir = normalize(_WorldSpaceLightPos0.xyz);
+                float NdotL = dot(worldNormal, lightDir);
                 
                 // Remap to 3 distinct levels
                 if (NdotL > 0.3) o.lightLevel = 1.0;
