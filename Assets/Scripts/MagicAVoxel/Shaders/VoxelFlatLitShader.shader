@@ -39,27 +39,17 @@ Shader "Custom/VoxelFlatLitShader"
                 o.pos = UnityObjectToClipPos(v.vertex);
                 o.color = v.color * _Color;
                 
-                // Calculate distance-based lighting from main light position
-                float3 worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
+                // Simple directional lighting that responds to scene lights
+                float3 worldNormal = UnityObjectToWorldNormal(v.normal);
+                float3 lightDir = normalize(_WorldSpaceLightPos0.xyz);
                 
-                // For directional lights, use a simple distance-based falloff
-                // For point lights, calculate actual distance
-                float lightDistance = length(_WorldSpaceLightPos0.xyz - worldPos);
+                // Basic dot product lighting
+                float NdotL = dot(worldNormal, lightDir);
                 
-                // If w component is 0, it's a directional light
-                if (_WorldSpaceLightPos0.w == 0.0) {
-                    // Directional light - use position-based variation
-                    lightDistance = length(worldPos) * 0.1; // Scale factor for variation
-                }
-                
-                // Convert distance to light levels (closer = brighter)
-                float lightIntensity = 1.0 / (1.0 + lightDistance * 0.5);
-                
-                // Quantize to discrete levels
-                if (lightIntensity > 0.8) o.lightLevel = 1.0;
-                else if (lightIntensity > 0.6) o.lightLevel = 0.8;
-                else if (lightIntensity > 0.4) o.lightLevel = 0.6;
-                else o.lightLevel = 0.4;
+                // Convert to simple 3-level system with good visibility
+                if (NdotL > 0.2) o.lightLevel = 1.0;        // Facing light
+                else if (NdotL > -0.5) o.lightLevel = 0.75;  // Side faces  
+                else o.lightLevel = 0.6;                     // Away from light
                 
                 return o;
             }
