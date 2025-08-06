@@ -1,6 +1,6 @@
 # CHANGELOG
-## 0.0.6
-### Major Stability and Bug Fix Release 🎯
+## 1.0.0
+### 🎉 MAJOR RELEASE: Fully Functional Voxel Rendering System
 - **CRITICAL FIX**: Resolved coordinate transformation bug causing single-layer voxel rendering
   - Fixed VoxModel.GetArrayIndex to properly reverse coordinate transformation
   - Mesh generation now renders complete 3D models instead of thin slices
