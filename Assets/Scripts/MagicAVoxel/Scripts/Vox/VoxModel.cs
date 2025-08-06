@@ -46,17 +46,21 @@ public class VoxModel
     
     private int GetArrayIndex(Vector3 position)
     {
-        int x = Mathf.RoundToInt(position.x);
-        int y = Mathf.RoundToInt(position.y);
-        int z = Mathf.RoundToInt(position.z);
+        // The position comes from mesh generation with coordinate transformation:
+        // mesh generation uses: pos = new Vector3(x, z, -y)
+        // So we need to reverse this transformation to get original voxel coordinates
         
-        // Check bounds
-        if (x < 0 || x >= sizeX || y < 0 || y >= sizeY || z < 0 || z >= sizeZ)
+        int origX = Mathf.RoundToInt(position.x);           // x stays x
+        int origY = Mathf.RoundToInt(-position.z);          // -z becomes y  
+        int origZ = Mathf.RoundToInt(position.y);           // y becomes z
+        
+        // Check bounds using original coordinate system
+        if (origX < 0 || origX >= sizeX || origY < 0 || origY >= sizeY || origZ < 0 || origZ >= sizeZ)
         {
             return -1; // Out of bounds
         }
         
-        // Convert 3D coordinates to 1D index
-        return x + y * sizeX + z * sizeX * sizeY;
+        // Convert 3D coordinates to 1D index using original .vox layout
+        return origX + origY * sizeX + origZ * sizeX * sizeY;
     }
 } 
