@@ -377,4 +377,4 @@ public class VoxelMeshSelector : MonoBehaviour
         // VoxelDefinition has reinitialized its cache, refresh our mesh
         UpdateMesh();
     }
-} 
+}

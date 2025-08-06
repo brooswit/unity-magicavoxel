@@ -330,4 +330,4 @@ public class VoxelDefinition : MonoBehaviour
         _customPaletteNames.Clear();
         _cachedVoxData = null;
     }
-} 
+}
