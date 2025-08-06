@@ -39,17 +39,27 @@ Shader "Custom/VoxelFlatLitShader"
                 o.pos = UnityObjectToClipPos(v.vertex);
                 o.color = v.color * _Color;
                 
-                // Calculate lighting using actual Unity main light
-                float3 worldNormal = UnityObjectToWorldNormal(v.normal);
+                // Calculate distance-based lighting from main light position
+                float3 worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
                 
-                // Use Unity's main directional light
-                float3 lightDir = normalize(_WorldSpaceLightPos0.xyz);
-                float NdotL = dot(worldNormal, lightDir);
+                // For directional lights, use a simple distance-based falloff
+                // For point lights, calculate actual distance
+                float lightDistance = length(_WorldSpaceLightPos0.xyz - worldPos);
                 
-                // Remap to 3 distinct levels
-                if (NdotL > 0.3) o.lightLevel = 1.0;
-                else if (NdotL > -0.3) o.lightLevel = 0.8;
-                else o.lightLevel = 0.6;
+                // If w component is 0, it's a directional light
+                if (_WorldSpaceLightPos0.w == 0.0) {
+                    // Directional light - use position-based variation
+                    lightDistance = length(worldPos) * 0.1; // Scale factor for variation
+                }
+                
+                // Convert distance to light levels (closer = brighter)
+                float lightIntensity = 1.0 / (1.0 + lightDistance * 0.5);
+                
+                // Quantize to discrete levels
+                if (lightIntensity > 0.8) o.lightLevel = 1.0;
+                else if (lightIntensity > 0.6) o.lightLevel = 0.8;
+                else if (lightIntensity > 0.4) o.lightLevel = 0.6;
+                else o.lightLevel = 0.4;
                 
                 return o;
             }
