@@ -85,15 +85,16 @@ Shader "Custom/VoxelEnhancedShader"
                 baseColor.rgb = pow(baseColor.rgb * _Brightness, _Contrast);
 
                 // Quantized diffuse lighting for pixelated look
-                float NdotL = saturate(dot(normalWS, lightDir));
+                float NdotL = dot(normalWS, lightDir) * 0.5 + 0.5;  // Remap from [-1,1] to [0,1]
                 
                 // Quantize lighting into discrete steps for pixel art look
-                NdotL = floor(NdotL * 4.0) / 4.0;  // 4 lighting levels
+                NdotL = floor(NdotL * 3.0) / 3.0;  // 3 lighting levels: 0.33, 0.66, 1.0
+                NdotL = max(NdotL, 0.33);  // Prevent completely black faces
                 
                 float3 diffuse = baseColor.rgb * lightColor * NdotL;
 
-                // Fixed ambient level for consistent pixel look
-                float ambientLevel = 0.4;
+                // Stronger ambient to prevent black faces
+                float ambientLevel = 0.6;
                 float3 ambient = baseColor.rgb * unity_AmbientSky.rgb * ambientLevel;
 
                 // Simplified AO based on face direction (flat per face)
