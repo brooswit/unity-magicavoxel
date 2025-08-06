@@ -40,8 +40,8 @@ Shader "Custom/VoxelEnhancedShader"
             {
                 float4 positionCS : SV_POSITION;
                 float3 positionWS : TEXCOORD0;
-                float3 normalWS : TEXCOORD1;
-                half4 color : COLOR;
+                nointerpolation float3 normalWS : TEXCOORD1;  // Flat shading
+                nointerpolation half4 color : COLOR;          // Flat color per face
                 float3 viewDirWS : TEXCOORD2;
             };
 
@@ -71,8 +71,8 @@ Shader "Custom/VoxelEnhancedShader"
 
             half4 frag (Varyings input) : SV_Target
             {
-                // Normalize vectors
-                float3 normalWS = normalize(input.normalWS);
+                // Use flat normals and colors (no interpolation)
+                float3 normalWS = input.normalWS;  // Don't normalize for flat shading
                 float3 viewDirWS = normalize(input.viewDirWS);
 
                 // Get main light
@@ -84,26 +84,32 @@ Shader "Custom/VoxelEnhancedShader"
                 half4 baseColor = input.color;
                 baseColor.rgb = pow(baseColor.rgb * _Brightness, _Contrast);
 
-                // Basic diffuse lighting
+                // Quantized diffuse lighting for pixelated look
                 float NdotL = saturate(dot(normalWS, lightDir));
+                
+                // Quantize lighting into discrete steps for pixel art look
+                NdotL = floor(NdotL * 4.0) / 4.0;  // 4 lighting levels
+                
                 float3 diffuse = baseColor.rgb * lightColor * NdotL;
 
-                // Ambient lighting with slight color shift for depth
-                float3 ambient = baseColor.rgb * unity_AmbientSky.rgb * 1.2;
+                // Fixed ambient level for consistent pixel look
+                float ambientLevel = 0.4;
+                float3 ambient = baseColor.rgb * unity_AmbientSky.rgb * ambientLevel;
 
-                // Simple ambient occlusion simulation based on normal direction
-                float ao = 1.0 - _AOStrength * (1.0 - abs(dot(normalWS, float3(0, 1, 0))));
+                // Simplified AO based on face direction (flat per face)
+                float ao = 1.0;
+                if (abs(normalWS.y) < 0.9) // Side faces
+                    ao = 1.0 - _AOStrength * 0.2;
+                if (normalWS.y < -0.5) // Bottom faces
+                    ao = 1.0 - _AOStrength * 0.5;
                 
-                // Rim lighting for edge definition
-                float rimFactor = 1.0 - saturate(dot(viewDirWS, normalWS));
-                float rim = pow(rimFactor, _RimPower);
-                float3 rimLight = rim * _RimColor.rgb * _RimColor.a;
+                // Sharp rim lighting cutoff for pixel look
+                float rimFactor = 1.0 - saturate(abs(dot(viewDirWS, normalWS)));
+                float rim = step(0.7, rimFactor) * _RimColor.a;  // Sharp cutoff
+                float3 rimLight = rim * _RimColor.rgb;
 
-                // Combine lighting
+                // Combine lighting with flat shading
                 float3 finalColor = ambient * ao + diffuse + rimLight;
-                
-                // Subtle color enhancement for voxel art vibrancy
-                finalColor = lerp(finalColor, saturate(finalColor * 1.1), 0.3);
 
                 return half4(finalColor, baseColor.a);
             }
