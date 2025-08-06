@@ -16,7 +16,7 @@ public class VoxAutoReload : AssetPostprocessor
             if (Path.GetExtension(assetPath).Equals(".vox", System.StringComparison.OrdinalIgnoreCase))
             {
                 // Find all VoxelDefinition components in the scene
-                VoxelDefinition[] allDefinitions = Object.FindObjectsOfType<VoxelDefinition>();
+                VoxelDefinition[] allDefinitions = Object.FindObjectsByType<VoxelDefinition>(FindObjectsSortMode.None);
                 foreach (VoxelDefinition voxelDefinition in allDefinitions)
                 {
                     bool shouldReloadModel = voxelDefinition.voxAsset == null || 
