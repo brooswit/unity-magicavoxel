@@ -11,96 +11,103 @@ Shader "Custom/VoxelEnhancedShader"
     }
     SubShader
     {
-        Tags { "RenderType"="Opaque" "Queue"="Geometry" }
+        Tags { "RenderType"="Opaque" "RenderPipeline"="UniversalPipeline" "Queue"="Geometry" }
         LOD 200
 
         Pass
         {
-            Tags { "LightMode"="ForwardBase" }
+            Name "ForwardLit"
+            Tags { "LightMode"="UniversalForward" }
             
-            CGPROGRAM
+            HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag
-            #pragma multi_compile_fwdbase
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
+            #pragma multi_compile _ _SHADOWS_SOFT
             
-            #include "UnityCG.cginc"
-            #include "Lighting.cginc"
-            #include "AutoLight.cginc"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
-            struct appdata
+            struct Attributes
             {
-                float4 vertex : POSITION;
-                float3 normal : NORMAL;
+                float4 positionOS : POSITION;
+                float3 normalOS : NORMAL;
                 float4 color : COLOR;
             };
 
-            struct v2f
+            struct Varyings
             {
-                float4 pos : SV_POSITION;
-                float3 worldPos : TEXCOORD0;
-                float3 worldNormal : TEXCOORD1;
-                fixed4 color : COLOR;
-                float3 viewDir : TEXCOORD2;
-                SHADOW_COORDS(3)
+                float4 positionCS : SV_POSITION;
+                float3 positionWS : TEXCOORD0;
+                float3 normalWS : TEXCOORD1;
+                half4 color : COLOR;
+                float3 viewDirWS : TEXCOORD2;
             };
 
-            fixed4 _Color;
-            float _Brightness;
-            float _Contrast;
-            float _AOStrength;
-            float _RimPower;
-            fixed4 _RimColor;
+            CBUFFER_START(UnityPerMaterial)
+                half4 _Color;
+                float _Brightness;
+                float _Contrast;
+                float _AOStrength;
+                float _RimPower;
+                half4 _RimColor;
+            CBUFFER_END
 
-            v2f vert (appdata v)
+            Varyings vert (Attributes input)
             {
-                v2f o;
-                o.pos = UnityObjectToClipPos(v.vertex);
-                o.worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
-                o.worldNormal = UnityObjectToWorldNormal(v.normal);
-                o.color = v.color * _Color;
-                o.viewDir = normalize(WorldSpaceViewDir(v.vertex));
-                TRANSFER_SHADOW(o)
-                return o;
+                Varyings output;
+                VertexPositionInputs vertexInput = GetVertexPositionInputs(input.positionOS.xyz);
+                VertexNormalInputs normalInput = GetVertexNormalInputs(input.normalOS);
+                
+                output.positionCS = vertexInput.positionCS;
+                output.positionWS = vertexInput.positionWS;
+                output.normalWS = normalInput.normalWS;
+                output.color = input.color * _Color;
+                output.viewDirWS = GetWorldSpaceViewDir(vertexInput.positionWS);
+                
+                return output;
             }
 
-            fixed4 frag (v2f i) : SV_Target
+            half4 frag (Varyings input) : SV_Target
             {
                 // Normalize vectors
-                float3 normal = normalize(i.worldNormal);
-                float3 viewDir = normalize(i.viewDir);
-                float3 lightDir = normalize(_WorldSpaceLightPos0.xyz);
+                float3 normalWS = normalize(input.normalWS);
+                float3 viewDirWS = normalize(input.viewDirWS);
+
+                // Get main light
+                Light mainLight = GetMainLight();
+                float3 lightDir = mainLight.direction;
+                float3 lightColor = mainLight.color;
 
                 // Base color with brightness and contrast adjustment
-                fixed4 baseColor = i.color;
+                half4 baseColor = input.color;
                 baseColor.rgb = pow(baseColor.rgb * _Brightness, _Contrast);
 
                 // Basic diffuse lighting
-                float NdotL = max(0, dot(normal, lightDir));
-                float3 diffuse = baseColor.rgb * _LightColor0.rgb * NdotL;
+                float NdotL = saturate(dot(normalWS, lightDir));
+                float3 diffuse = baseColor.rgb * lightColor * NdotL;
 
                 // Ambient lighting with slight color shift for depth
-                float3 ambient = baseColor.rgb * UNITY_LIGHTMODEL_AMBIENT.rgb * 1.2;
+                float3 ambient = baseColor.rgb * unity_AmbientSky.rgb * 1.2;
 
                 // Simple ambient occlusion simulation based on normal direction
-                float ao = 1.0 - _AOStrength * (1.0 - abs(dot(normal, float3(0, 1, 0))));
+                float ao = 1.0 - _AOStrength * (1.0 - abs(dot(normalWS, float3(0, 1, 0))));
                 
                 // Rim lighting for edge definition
-                float rimFactor = 1.0 - saturate(dot(viewDir, normal));
+                float rimFactor = 1.0 - saturate(dot(viewDirWS, normalWS));
                 float rim = pow(rimFactor, _RimPower);
                 float3 rimLight = rim * _RimColor.rgb * _RimColor.a;
 
-                // Shadow attenuation
-                float shadow = SHADOW_ATTENUATION(i);
-
                 // Combine lighting
-                float3 finalColor = ambient * ao + (diffuse * shadow) + rimLight;
+                float3 finalColor = ambient * ao + diffuse + rimLight;
                 
                 // Subtle color enhancement for voxel art vibrancy
                 finalColor = lerp(finalColor, saturate(finalColor * 1.1), 0.3);
 
-                return fixed4(finalColor, baseColor.a);
+                return half4(finalColor, baseColor.a);
             }
-            ENDCG
+            ENDHLSL
         }
         
         // Shadow casting pass
@@ -109,29 +116,16 @@ Shader "Custom/VoxelEnhancedShader"
             Name "ShadowCaster"
             Tags { "LightMode"="ShadowCaster" }
             
-            CGPROGRAM
-            #pragma vertex vert
-            #pragma fragment frag
-            #pragma multi_compile_shadowcaster
-            #include "UnityCG.cginc"
-
-            struct v2f {
-                V2F_SHADOW_CASTER;
-            };
-
-            v2f vert(appdata_base v)
-            {
-                v2f o;
-                TRANSFER_SHADOW_CASTER_NORMALOFFSET(o)
-                return o;
-            }
-
-            float4 frag(v2f i) : SV_Target
-            {
-                SHADOW_CASTER_FRAGMENT(i)
-            }
-            ENDCG
+            HLSLPROGRAM
+            #pragma vertex ShadowPassVertex
+            #pragma fragment ShadowPassFragment
+            #pragma multi_compile_instancing
+            
+            #include "Packages/com.unity.render-pipelines.universal/Shaders/LitInput.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/Shaders/ShadowCasterPass.hlsl"
+            
+            ENDHLSL
         }
     }
-    FallBack "VertexLit"
+    FallBack "Universal Render Pipeline/Lit"
 }
