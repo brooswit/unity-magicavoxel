@@ -29,6 +29,7 @@ Shader "Custom/VoxelFlatLitShader"
                 float4 pos : SV_POSITION;
                 float4 color : COLOR;
                 float3 worldNormal : TEXCOORD0;
+                float3 worldPos : TEXCOORD1;
             };
 
             fixed4 _Color;
@@ -39,6 +40,7 @@ Shader "Custom/VoxelFlatLitShader"
                 o.pos = UnityObjectToClipPos(v.vertex);
                 o.color = v.color * _Color;
                 o.worldNormal = UnityObjectToWorldNormal(v.normal);
+                o.worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
                 return o;
             }
 
@@ -46,12 +48,33 @@ Shader "Custom/VoxelFlatLitShader"
             {
                 float3 normal = normalize(i.worldNormal);
                 
-                // Simple directional lighting
-                float3 lightDir = normalize(_WorldSpaceLightPos0.xyz);
-                float NdotL = dot(normal, lightDir) * 0.5 + 0.5;
+                // Start with ambient
+                float3 lighting = float3(0.2, 0.2, 0.2);
                 
-                // Add some basic ambient
-                float3 lighting = float3(0.3, 0.3, 0.3) + float3(0.7, 0.7, 0.7) * NdotL;
+                // Add main directional light
+                float3 lightDir = normalize(_WorldSpaceLightPos0.xyz);
+                float NdotL = max(0, dot(normal, lightDir));
+                lighting += float3(0.8, 0.8, 0.8) * NdotL;
+                
+                // Simple point light approximation at fixed positions
+                float3 pointLightPositions[3] = {
+                    float3(5, 5, 5),
+                    float3(-5, 5, 5), 
+                    float3(0, 5, -5)
+                };
+                
+                for (int j = 0; j < 3; j++)
+                {
+                    float3 toLight = pointLightPositions[j] - i.worldPos;
+                    float dist = length(toLight);
+                    if (dist < 15.0)
+                    {
+                        float3 pointLightDir = normalize(toLight);
+                        float pointNdotL = max(0, dot(normal, pointLightDir));
+                        float attenuation = 1.0 / (1.0 + dist * dist * 0.1);
+                        lighting += float3(0.3, 0.3, 0.3) * pointNdotL * attenuation;
+                    }
+                }
                 
                 return fixed4(i.color.rgb * lighting, i.color.a);
             }
