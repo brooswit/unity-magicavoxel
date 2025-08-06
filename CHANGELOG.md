@@ -1,4 +1,35 @@
 # CHANGELOG
+## 0.0.6
+### Major Stability and Bug Fix Release 🎯
+- **CRITICAL FIX**: Resolved coordinate transformation bug causing single-layer voxel rendering
+  - Fixed VoxModel.GetArrayIndex to properly reverse coordinate transformation
+  - Mesh generation now renders complete 3D models instead of thin slices
+  - Coordinate system properly maps between .vox storage and Unity rendering
+- **FIX**: Resolved CS0102 compiler error by renaming UpdateCollider method to UpdateMeshCollider
+  - Eliminated naming conflict between UpdateCollider property and method
+  - Clear semantic distinction between control setting and operation
+- **FIX**: Resolved SendMessage restrictions in OnValidate by deferring mesh updates
+  - Smart deferral using EditorApplication.delayCall in editor mode
+  - Immediate updates during runtime for responsive gameplay
+  - Includes safety checks to prevent errors on destroyed objects
+- **FIX**: Updated deprecated FindObjectsOfType to modern FindObjectsByType API
+  - Uses FindObjectsSortMode.None for optimal performance
+  - Eliminates deprecation warnings in Unity 2023+
+- **FIX**: Resolved VoxAutoReload compilation errors with proper Unity API usage
+  - Uses reflection to safely call private cache management methods
+  - Proper Object.FindObjectsByType usage with modern Unity versions
+- **FIX**: Corrected VoxTools palette index range check (255 vs 256)
+  - Removes compiler warning about useless integral constant comparison
+- **IMPROVE**: Enhanced Rigidbody detection for automatic collider convex setting
+  - Dynamic detection of Rigidbody component addition/removal
+  - Automatic mesh collider convex property synchronization
+- **IMPROVE**: Simplified VoxAutoReload by leveraging event system architecture
+  - Removed redundant VoxelMeshSelector handling
+  - Relies on OnCacheReinitialized events for automatic updates
+- **IMPROVE**: Code organization following consistent patterns across components
+  - Standardized section headers and method grouping
+  - Clear separation between public/private methods and logical subsections
+
 ## 0.0.5
 ### Enhance New Architecture with Missing Features
 - Add: [ExecuteInEditMode] support for real-time editor updates
