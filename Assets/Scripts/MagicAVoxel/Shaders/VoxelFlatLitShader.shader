@@ -18,6 +18,7 @@ Shader "Custom/VoxelFlatLitShader"
 
         struct Input
         {
+            float2 uv_MainTex;
             float4 color : COLOR;
         };
 
