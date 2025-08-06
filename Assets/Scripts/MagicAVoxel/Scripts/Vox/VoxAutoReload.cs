@@ -10,13 +10,13 @@ public class VoxAutoReload : AssetPostprocessor
         string[] movedAssets, string[] movedFromAssetPaths)
     {
         string[] allChangedAssets = importedAssets.Concat(deletedAssets).Concat(movedAssets).ToArray();
-        bool shouldReload = false;
+        
         foreach (string assetPath in allChangedAssets)
         {
             if (Path.GetExtension(assetPath).Equals(".vox", System.StringComparison.OrdinalIgnoreCase))
             {
                 // Find all VoxelDefinition components in the scene
-                VoxelDefinition[] allDefinitions = FindObjectsOfType<VoxelDefinition>();
+                VoxelDefinition[] allDefinitions = Object.FindObjectsOfType<VoxelDefinition>();
                 foreach (VoxelDefinition voxelDefinition in allDefinitions)
                 {
                     bool shouldReloadModel = voxelDefinition.voxAsset == null || 
@@ -24,8 +24,18 @@ public class VoxAutoReload : AssetPostprocessor
                     
                     if (shouldReloadModel)
                     {
-                        // Clear the definition's cache and reinitialize
-                        voxelDefinition.OnValidate();
+                        // Force cache clearing and reinitialize using reflection since OnValidate is protected
+                        var clearMethod = typeof(VoxelDefinition).GetMethod("ClearAllCaches", 
+                            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                        var initMethod = typeof(VoxelDefinition).GetMethod("InitializeCache", 
+                            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                        
+                        if (clearMethod != null && initMethod != null)
+                        {
+                            clearMethod.Invoke(voxelDefinition, null);
+                            initMethod.Invoke(voxelDefinition, null);
+                        }
+                        
                         EditorUtility.SetDirty(voxelDefinition);
                     }
                 }

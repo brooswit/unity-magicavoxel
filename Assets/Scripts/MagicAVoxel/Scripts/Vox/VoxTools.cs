@@ -199,7 +199,7 @@ public static class VoxTools
                     byte paletteIndex = voxModel.GetVoxel(pos);
                     if (paletteIndex == 0) continue; // Empty voxel
                     
-                    if (paletteIndex < 1 || paletteIndex > 256)
+                    if (paletteIndex < 1 || paletteIndex > 255)
                     {
                         Debug.LogWarning($"Palette index {paletteIndex} out of range at position {pos}. Skipping voxel.");
                         continue;
