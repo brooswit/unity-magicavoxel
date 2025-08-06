@@ -115,7 +115,22 @@ public class VoxelMeshSelector : MonoBehaviour
     {
         InitializeComponents();
         SubscribeToVoxelDefinitionEvents();
-        UpdateMesh();
+        
+        // Defer mesh update to avoid SendMessage restrictions during OnValidate
+        if (Application.isPlaying)
+        {
+            UpdateMesh();
+        }
+        else
+        {
+            // In editor, schedule the update for the next editor update
+            UnityEditor.EditorApplication.delayCall += () => {
+                if (this != null) // Check if object still exists
+                {
+                    UpdateMesh();
+                }
+            };
+        }
     }
     
     void OnDestroy()
