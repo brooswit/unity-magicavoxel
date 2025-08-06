@@ -73,9 +73,8 @@ Shader "Custom/VoxelEnhancedShader"
 
             half4 frag (Varyings input) : SV_Target
             {
-                // Calculate face normal from screen-space derivatives for true flat shading
-                float3 positionWS = input.positionWS;
-                float3 normalWS = normalize(cross(ddx(positionWS), ddy(positionWS)));
+                // Use flat normals (nointerpolation should work now)
+                float3 normalWS = normalize(input.normalWS);
                 float3 viewDirWS = normalize(input.viewDirWS);
 
                 // Get main light
