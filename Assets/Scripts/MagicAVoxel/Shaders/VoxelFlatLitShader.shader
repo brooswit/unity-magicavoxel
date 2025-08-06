@@ -11,15 +11,11 @@ Shader "Custom/VoxelFlatLitShader"
 
         Pass
         {
-            Tags { "LightMode"="ForwardBase" }
-            
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
-            #pragma multi_compile_fwdbase
             
             #include "UnityCG.cginc"
-            #include "Lighting.cginc"
 
             struct appdata
             {
@@ -31,8 +27,8 @@ Shader "Custom/VoxelFlatLitShader"
             struct v2f
             {
                 float4 pos : SV_POSITION;
-                nointerpolation float4 color : COLOR;     // Flat color per face
-                nointerpolation float3 normal : NORMAL;   // Flat normal per face
+                nointerpolation float4 color : COLOR;
+                nointerpolation float lightLevel : TEXCOORD0;
             };
 
             fixed4 _Color;
@@ -42,26 +38,26 @@ Shader "Custom/VoxelFlatLitShader"
                 v2f o;
                 o.pos = UnityObjectToClipPos(v.vertex);
                 o.color = v.color * _Color;
-                o.normal = UnityObjectToWorldNormal(v.normal);
+                
+                // Calculate lighting in vertex shader
+                float3 worldNormal = UnityObjectToWorldNormal(v.normal);
+                float3 lightDir = float3(0.5, 1, 0.5); // Simple fixed light direction
+                float NdotL = dot(worldNormal, normalize(lightDir));
+                
+                // Remap to 3 distinct levels
+                if (NdotL > 0.3) o.lightLevel = 1.0;
+                else if (NdotL > -0.3) o.lightLevel = 0.8;
+                else o.lightLevel = 0.6;
+                
                 return o;
             }
 
             fixed4 frag (v2f i) : SV_Target
             {
-                // Simple flat lighting - each face gets one lighting value
-                float3 lightDir = normalize(_WorldSpaceLightPos0.xyz);
-                float NdotL = dot(i.normal, lightDir);
-                
-                // Remap to avoid pure black faces
-                float lightIntensity = NdotL * 0.4 + 0.6;  // Range from 0.6 to 1.0
-                
-                // Apply lighting to vertex color
-                fixed4 finalColor = i.color * lightIntensity;
-                
-                return finalColor;
+                return i.color * i.lightLevel;
             }
             ENDCG
         }
     }
-    FallBack "VertexLit"
+    FallBack "Diffuse"
 }
