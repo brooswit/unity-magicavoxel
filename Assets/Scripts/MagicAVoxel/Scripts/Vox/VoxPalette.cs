@@ -109,10 +109,11 @@ public class VoxPalette
         for (int i = 0; i < 256 && i < colors.Length; i++)
         {
             uint color = defaultPalette[i];
-            byte r = (byte)((color >> 24) & 0xFF);
-            byte g = (byte)((color >> 16) & 0xFF);
-            byte b = (byte)((color >> 8) & 0xFF);
-            byte a = (byte)(color & 0xFF);
+            // The palette is stored as ARGB, so we need to extract correctly:
+            byte a = (byte)((color >> 24) & 0xFF);  // Alpha
+            byte r = (byte)((color >> 16) & 0xFF);  // Red  
+            byte g = (byte)((color >> 8) & 0xFF);   // Green
+            byte b = (byte)(color & 0xFF);          // Blue
             colors[i] = new Color32(r, g, b, a);
         }
     }
