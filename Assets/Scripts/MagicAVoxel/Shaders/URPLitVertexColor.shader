@@ -36,10 +36,11 @@ Shader "Custom/URPLitVertexColor"
             Varyings vert(Attributes input)
             {
                 Varyings output;
-                output.positionWS = TransformObjectToWorld(input.positionOS.xyz);
-                output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
+                VertexPositionInputs positionInputs = GetVertexPositionInputs(input.positionOS.xyz);
+                output.positionWS = positionInputs.positionWS;
+                output.positionCS = positionInputs.positionCS;
                 output.normalWS = TransformObjectToWorldNormal(input.normalOS);
-                output.shadowCoord = GetShadowCoord(input.positionOS, output.positionWS);
+                output.shadowCoord = GetShadowCoord(positionInputs);
                 output.color = input.color;
                 return output;
             }
