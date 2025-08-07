@@ -39,34 +39,28 @@ Shader "Custom/BasicVertexColor"
 
             fixed4 frag (v2f i) : SV_Target
             {
-                float3 lighting = float3(0.2, 0.2, 0.2); // darker ambient to see point light better
+                // DIAGNOSTIC: Show world position as color
+                // This will tell us if world position calculation is working at all
                 
-                // Simple fixed directional light (weaker)
-                float3 lightDir = normalize(float3(0.3, -0.8, 0.5));
-                float NdotL = max(0, dot(normalize(i.worldNormal), lightDir));
-                lighting += float3(0.4, 0.4, 0.4) * NdotL;
+                float3 worldPos = i.worldPos;
                 
-                // VERY OBVIOUS point light test
-                float3 pointLightPos = float3(0, 0, 0); // Right at world origin
-                float3 toLight = pointLightPos - i.worldPos;
-                float distance = length(toLight);
+                // Convert world position to visible colors
+                // X axis = red channel, Y axis = green channel, Z axis = blue channel
+                float3 posColor = abs(worldPos) * 0.1; // Scale down to 0-1 range
+                posColor = frac(posColor); // Keep only fractional part for cycling colors
                 
-                // Distance-based color for debugging
-                if (distance < 5.0)
+                // Also show distance from origin as brightness
+                float distance = length(worldPos);
+                float brightness = 1.0 - saturate(distance * 0.1);
+                
+                // If very close to origin (within 2 units), override with pure red
+                if (distance < 2.0)
                 {
-                    // Close objects get bright red
-                    lighting += float3(2, 0, 0) * (5.0 - distance) / 5.0;
-                }
-                else if (distance < 10.0)
-                {
-                    // Medium distance objects get orange
-                    float3 lightDirection = normalize(toLight);
-                    float intensity = (10.0 - distance) / 5.0; // Linear falloff
-                    float lambert = max(0.1, dot(normalize(i.worldNormal), lightDirection));
-                    lighting += float3(1, 0.5, 0) * lambert * intensity;
+                    return fixed4(1, 0, 0, 1); // PURE RED
                 }
                 
-                return fixed4(i.color.rgb * lighting, i.color.a);
+                // Otherwise show position-based colors
+                return fixed4(posColor * brightness, 1);
             }
             ENDCG
         }
