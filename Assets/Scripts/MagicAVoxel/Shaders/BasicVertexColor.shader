@@ -39,10 +39,22 @@ Shader "Custom/BasicVertexColor"
 
             fixed4 frag (v2f i) : SV_Target
             {
-                // INTENTIONAL ERROR TO FORCE PINK SHADER
-                BROKEN_FUNCTION_THAT_DOESNT_EXIST();
+                float3 lighting = float3(0.2, 0.2, 0.2); // ambient
                 
-                return fixed4(1, 0, 0, 1);
+                // Simple fixed directional light
+                float3 lightDir = normalize(float3(0.3, -0.8, 0.5));
+                float NdotL = max(0, dot(normalize(i.worldNormal), lightDir));
+                lighting += float3(0.4, 0.4, 0.4) * NdotL;
+                
+                // BRIGHT RED point light at origin for testing
+                float3 toLight = float3(0, 0, 0) - i.worldPos;
+                float distance = length(toLight);
+                if (distance < 5.0)
+                {
+                    lighting += float3(3, 0, 0) * (5.0 - distance) / 5.0; // SUPER BRIGHT RED
+                }
+                
+                return fixed4(i.color.rgb * lighting, i.color.a);
             }
             ENDCG
         }
