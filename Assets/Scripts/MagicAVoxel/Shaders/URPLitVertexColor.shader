@@ -111,11 +111,16 @@ Shader "Custom/URPLitVertexColor"
                 half3 color = 0;
                 for (uint i = 0u; i < lightCount; ++i)
                 {
+                    // Get the light data for the current light
                     Light light = GetAdditionalLight(i, input.positionWS);
-                    half lambert = dot(normalWS, light.direction);
-                    color += lambert * light.color * light.distanceAttenuation;
+                    
+                    // Calculate the lighting contribution from this light
+                    half3 attenuatedLightColor = light.color * light.distanceAttenuation;
+                    half NdotL = saturate(dot(normalWS, light.direction));
+                    color += NdotL * attenuatedLightColor;
                 }
                 
+                // Apply the vertex color to the final calculated light
                 return half4(color * input.color.rgb, 1.0);
             }
             ENDHLSL
