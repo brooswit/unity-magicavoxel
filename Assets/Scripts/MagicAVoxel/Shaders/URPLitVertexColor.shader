@@ -1,6 +1,10 @@
 // A simple lit shader for URP that uses vertex colors and supports multiple lights.
 Shader "Custom/URPLitVertexColor"
 {
+    Properties
+    {
+        _Color ("Color Tint", Color) = (1,1,1,1)
+    }
     SubShader
     {
         Tags { "RenderPipeline"="UniversalPipeline" "RenderType"="Opaque" }
@@ -25,6 +29,10 @@ Shader "Custom/URPLitVertexColor"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
+            CBUFFER_START(UnityPerMaterial)
+                half4 _Color;
+            CBUFFER_END
+            
             struct Attributes
             {
                 float4 positionOS : POSITION;
@@ -77,7 +85,7 @@ Shader "Custom/URPLitVertexColor"
                 #endif
                 
                 // --- Final Color ---
-                finalColor *= input.color.rgb;
+                finalColor *= input.color.rgb * _Color.rgb;
                 return half4(finalColor, input.color.a);
             }
             ENDHLSL
