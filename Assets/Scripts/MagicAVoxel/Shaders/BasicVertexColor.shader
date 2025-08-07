@@ -39,19 +39,32 @@ Shader "Custom/BasicVertexColor"
 
             fixed4 frag (v2f i) : SV_Target
             {
-                float3 lighting = float3(0.2, 0.2, 0.2); // ambient
+                float3 lighting = float3(0.3, 0.3, 0.3); // ambient
                 
-                // Simple fixed directional light
-                float3 lightDir = normalize(float3(0.3, -0.8, 0.5));
+                // Main directional light (Unity's main light)
+                float3 lightDir = normalize(_WorldSpaceLightPos0.xyz);
                 float NdotL = max(0, dot(normalize(i.worldNormal), lightDir));
-                lighting += float3(0.4, 0.4, 0.4) * NdotL;
+                lighting += _LightColor0.rgb * NdotL;
                 
-                // BRIGHT RED point light at origin for testing
-                float3 toLight = float3(0, 0, 0) - i.worldPos;
-                float distance = length(toLight);
-                if (distance < 5.0)
+                // Check for point lights at common positions where you might place them
+                float3 testPositions[4] = {
+                    float3(0, 3, 0),    // Above origin
+                    float3(5, 2, 0),    // To the right
+                    float3(-5, 2, 0),   // To the left  
+                    float3(0, 2, 5)     // In front
+                };
+                
+                for (int j = 0; j < 4; j++)
                 {
-                    lighting += float3(3, 0, 0) * (5.0 - distance) / 5.0; // SUPER BRIGHT RED
+                    float3 toLight = testPositions[j] - i.worldPos;
+                    float distance = length(toLight);
+                    if (distance < 8.0)
+                    {
+                        float3 lightDirection = normalize(toLight);
+                        float intensity = 1.0 / (1.0 + distance * distance * 0.02);
+                        float lambert = max(0, dot(normalize(i.worldNormal), lightDirection));
+                        lighting += float3(1, 0.6, 0.2) * lambert * intensity * 2.0; // Orange point lights
+                    }
                 }
                 
                 return fixed4(i.color.rgb * lighting, i.color.a);
