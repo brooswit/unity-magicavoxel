@@ -133,7 +133,7 @@ Shader "Custom/URPVertexColorLit"
                 // Apply fog to the final color.
                 finalColor = MixFog(finalColor, input.fogFactorAndVertexLight.x);
 
-                return half4(finalColor, albedou.a);
+                return half4(finalColor, albedo.a);
             }
             ENDHLSL
         }
