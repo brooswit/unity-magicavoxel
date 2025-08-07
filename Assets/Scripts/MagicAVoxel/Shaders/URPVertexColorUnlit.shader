@@ -103,6 +103,7 @@ Shader "Custom/URPVertexColorUnlit"
                 return input.color;
             }
             ENDHLSL
+        }
     }
     FallBack "Universal Render Pipeline/Unlit"
 }
