@@ -46,12 +46,12 @@ Shader "Custom/SimpleMultiLight"
 
             fixed4 frag (v2f i) : SV_Target
             {
-                float3 lighting = float3(0.2, 0.2, 0.2); // ambient
+                float3 lighting = float3(0.3, 0.3, 0.3); // ambient
                 
-                // Main directional light
-                float3 lightDir = normalize(_WorldSpaceLightPos0.xyz);
+                // Simple fixed directional light
+                float3 lightDir = normalize(float3(0.3, -0.8, 0.5));
                 float NdotL = max(0, dot(i.worldNormal, lightDir));
-                lighting += _LightColor0.rgb * NdotL;
+                lighting += float3(1, 1, 0.9) * NdotL * 0.7;
                 
                 // Check for point lights at common positions
                 float3 pointLightPositions[8] = {
@@ -74,7 +74,7 @@ Shader "Custom/SimpleMultiLight"
                         float3 lightDirection = normalize(toLight);
                         float intensity = 1.0 / (1.0 + distance * distance * 0.1);
                         float lambert = max(0, dot(i.worldNormal, lightDirection));
-                        lighting += float3(1, 0.8, 0.6) * lambert * intensity;
+                        lighting += float3(1, 0.5, 0.2) * lambert * intensity;
                     }
                 }
                 
