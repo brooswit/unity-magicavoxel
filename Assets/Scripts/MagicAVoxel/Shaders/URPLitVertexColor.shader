@@ -74,14 +74,9 @@ Shader "Custom/URPLitVertexColor"
 
                 // --- Additional Lights ---
                 #ifdef _ADDITIONAL_LIGHTS
-                    uint lightCount = GetAdditionalLightsCount();
-                    for (uint i = 0u; i < lightCount; ++i)
-                    {
-                        Light light = GetAdditionalLight(i, input.positionWS);
-                        half3 attenuatedLightColor = light.color * light.shadowAttenuation * light.distanceAttenuation;
-                        NdotL = saturate(dot(input.normalWS, light.direction));
-                        finalColor += NdotL * attenuatedLightColor;
-                    }
+                    // If this code runs, the object will turn magenta.
+                    // This is a diagnostic to prove the shader variant is correct.
+                    finalColor = half3(1, 0, 1);
                 #endif
                 
                 // --- Final Color ---
