@@ -341,8 +341,9 @@ public class VoxelMeshSelector : MonoBehaviour
         
         // Try to find appropriate shader in order of preference
         string[] shaderNames = {
-            "Custom/URPMinimalVertexColor", // NEW: Absolutely minimal URP vertex color shader
-            "Custom/URPVertexColorUnlit", // Barebones, unlit vertex color shader for URP
+            "Custom/URPLitVertexColor",      // NEW: Simple URP lit vertex color shader
+            "Custom/URPMinimalVertexColor",
+            "Custom/URPVertexColorUnlit",
             "Custom/VoxelFlatLitShader",
             "Custom/VoxelSimpleShader",
             "Custom/VertexColorShader",

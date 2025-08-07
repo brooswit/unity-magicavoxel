@@ -1,10 +1,9 @@
-// A truly minimal unlit shader for the Universal Render Pipeline that only displays vertex colors.
-// This is a diagnostic shader to establish a working baseline.
-Shader "Custom/URPMinimalVertexColor"
+// A simple lit shader for URP that uses vertex colors.
+Shader "Custom/URPLitVertexColor"
 {
     SubShader
     {
-        Tags { "RenderPipeline"="UniversalPipeline" "RenderType"="Opaque" }
+        Tags { "RenderPipeline"="UniversalPipeline" "RenderType"="Opaque" "LightMode"="UniversalForward" }
 
         Pass
         {
@@ -13,16 +12,19 @@ Shader "Custom/URPMinimalVertexColor"
             #pragma fragment frag
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
             struct Attributes
             {
                 float4 positionOS   : POSITION;
+                float3 normalOS     : NORMAL;
                 half4  color        : COLOR;
             };
 
             struct Varyings
             {
                 float4 positionCS : SV_POSITION;
+                half3  normalWS   : NORMAL;
                 half4  color      : COLOR;
             };
 
@@ -30,13 +32,18 @@ Shader "Custom/URPMinimalVertexColor"
             {
                 Varyings output;
                 output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
+                output.normalWS = TransformObjectToWorldNormal(input.normalOS);
                 output.color = input.color;
                 return output;
             }
 
             half4 frag(Varyings input) : SV_Target
             {
-                return input.color;
+                half3 normalWS = normalize(input.normalWS);
+                Light mainLight = GetMainLight();
+                half lambert = dot(normalWS, mainLight.direction);
+                half3 color = lambert * mainLight.color;
+                return half4(input.color.rgb * color, input.color.a);
             }
             ENDHLSL
         }
