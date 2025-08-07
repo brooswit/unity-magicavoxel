@@ -41,10 +41,10 @@ Shader "Custom/BasicVertexColor"
             {
                 float3 lighting = float3(0.3, 0.3, 0.3); // ambient
                 
-                // Main directional light (Unity's main light)
-                float3 lightDir = normalize(_WorldSpaceLightPos0.xyz);
+                // Fixed directional light (no Unity dependencies)
+                float3 lightDir = normalize(float3(0.3, -0.8, 0.5));
                 float NdotL = max(0, dot(normalize(i.worldNormal), lightDir));
-                lighting += _LightColor0.rgb * NdotL;
+                lighting += float3(0.7, 0.7, 0.6) * NdotL;
                 
                 // Check for point lights at common positions where you might place them
                 float3 testPositions[4] = {
