@@ -1,6 +1,6 @@
 // A simple lit shader for the Universal Render Pipeline that uses vertex colors.
 // It supports multiple lights, shadows, and instancing.
-Shader "Custom/URPVertexColorLit"
+Shader "Custom/URPVertexColorUnlit"
 {
     Properties
     {
@@ -98,63 +98,11 @@ Shader "Custom/URPVertexColorLit"
             // This function determines the final color of each pixel.
             half4 frag(Varyings input) : SV_Target
             {
-                UNITY_SETUP_INSTANCE_ID(input);
-
-                // Get the main light and additional lights affecting this fragment.
-                #if defined(REQUIRES_VERTEX_SHADOW_COORD_INTERPOLATOR)
-                    Light mainLight = GetMainLight(input.shadowCoord);
-                #else
-                    Light mainLight = GetMainLight();
-                #endif
-                
-                // Get the base color from vertex color.
-                half4 albedo = input.color;
-
-                // Calculate the final lighting by combining all light sources.
-                half3 finalLighting = 0;
-                
-                // Main light contribution.
-                finalLighting += mainLight.color * mainLight.attenuation;
-
-                // Additional lights contribution.
-                int additionalLightsCount = GetAdditionalLightsCount();
-                for (int i = 0; i < additionalLightsCount; ++i)
-                {
-                    Light additionalLight = GetAdditionalLight(i, input.positionWS);
-                    finalLighting += additionalLight.color * additionalLight.attenuation;
-                }
-                
-                // Add vertex lights (lights baked into vertices).
-                finalLighting += input.fogFactorAndVertexLight.yzz;
-
-                // Combine base color with the calculated lighting.
-                half3 finalColor = albedo.rgb * finalLighting;
-                
-                // Apply fog to the final color.
-                finalColor = MixFog(finalColor, input.fogFactorAndVertexLight.x);
-
-                return half4(finalColor, albedo.a);
+                // For debugging, just return the raw vertex color.
+                // This will confirm if the vertex data is being passed correctly.
+                return input.color;
             }
             ENDHLSL
-        }
-
-        // This pass is used for casting shadows.
-        // It's a minimal pass that outputs depth information.
-        Pass
-        {
-            Name "ShadowCaster"
-            Tags { "LightMode"="ShadowCaster" }
-
-            HLSLPROGRAM
-            #pragma vertex ShadowPassVertex
-            #pragma fragment ShadowPassFragment
-
-            // URP shadow caster include.
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/LitInput.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/ShadowCasterPass.hlsl"
-            
-            ENDHLSL
-        }
     }
-    FallBack "Universal Render Pipeline/Lit"
+    FallBack "Universal Render Pipeline/Unlit"
 }
