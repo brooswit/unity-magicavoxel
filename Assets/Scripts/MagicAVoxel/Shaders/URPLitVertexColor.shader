@@ -128,17 +128,20 @@ Shader "Custom/URPLitVertexColor"
 
             half4 frag(Varyings input) : SV_Target
             {
-                // FINAL DIAGNOSTIC: If the ForwardAdd pass runs, this object will glow red.
-                // This proves the pass is executing, isolating the problem to the light data itself.
+                half3 finalColor = 0;
+                
                 #ifdef _ADDITIONAL_LIGHTS
                     uint lightCount = GetAdditionalLightsCount();
-                    if (lightCount > 0)
+                    for (uint i = 0u; i < lightCount; ++i)
                     {
-                        return half4(1, 0, 0, 1) * input.color.a; // Return PURE RED
+                        Light light = GetAdditionalLight(i, input.positionWS);
+                        half NdotL = saturate(dot(input.normalWS, light.direction));
+                        half3 diffuse = NdotL * light.color * light.distanceAttenuation;
+                        finalColor += diffuse;
                     }
                 #endif
                 
-                return half4(0,0,0,0); // Return black if no additional lights
+                return half4(finalColor * input.color.rgb, 1.0);
             }
             ENDHLSL
         }
