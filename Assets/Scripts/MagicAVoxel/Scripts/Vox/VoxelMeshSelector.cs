@@ -339,37 +339,17 @@ public class VoxelMeshSelector : MonoBehaviour
     {
         if (_meshRenderer == null || _meshRenderer.sharedMaterial != null) return;
         
-        // Try to find appropriate shader in order of preference
-        string[] shaderNames = {
-            "Custom/URPLitVertexColor",      // CORRECT: Proper URP lit vertex color shader
-            "Custom/BasicVertexColor",       // Fallback: Simple vertex color shader
-            "Custom/URPMinimalVertexColor",
-            "Custom/URPVertexColorUnlit",
-            "Custom/VoxelFlatLitShader",
-            "Custom/VoxelSimpleShader",
-            "Custom/VertexColorShader",
-            "Custom/VoxelEnhancedShader",
-            "Custom/VertexColorLitShader",
-            "Universal Render Pipeline/Lit", // URP's default lit shader
-            "Unlit/Color",
-            "Standard"
-        };
-        
-        foreach (string shaderName in shaderNames)
+        // Use proper URP vertex color shader based on Unity documentation
+        Shader voxelShader = Shader.Find("Custom/VoxelURPVertexColor");
+        if (voxelShader != null)
         {
-            Shader shader = Shader.Find(shaderName);
-            if (shader != null)
-            {
-                Material material = new Material(shader);
-                material.name = $"VoxelMaterial_{gameObject.name}";
-                _meshRenderer.sharedMaterial = material;
-                break;
-            }
+            Material material = new Material(voxelShader);
+            material.name = $"VoxelMaterial_{gameObject.name}";
+            _meshRenderer.sharedMaterial = material;
         }
-        
-        if (_meshRenderer.sharedMaterial == null)
+        else
         {
-            Debug.LogWarning($"VoxelMeshSelector: Could not find any suitable shader for {gameObject.name}");
+            Debug.LogError($"VoxelMeshSelector: Could not find 'Custom/VoxelURPVertexColor' shader for {gameObject.name}. Make sure the shader file exists.");
         }
     }
 

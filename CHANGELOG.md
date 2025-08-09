@@ -1,4 +1,15 @@
 # CHANGELOG
+## 1.1.0
+### Simplify Shaders and Finalize URP Lighting
+- Remove legacy shaders and tests; keep a single, clean shader: `Custom/VoxelURPVertexColor`
+- Clean URP shader: vertex colors, ambient, main light, additional lights; no boosts
+- Fix default material assignment to use `Custom/VoxelURPVertexColor`
+- Update URP asset settings to ensure additional lights compile and render
+  - `m_AdditionalLightsRenderingMode: 2` (Per Pixel)
+  - `m_AdditionalLightsPerObjectLimit: 8`
+  - `m_PrefilteringModeAdditionalLight: 0` (keep variants)
+- Remove debug and experimental shaders to avoid pink shader confusion
+- Scene material reference updated away from `Custom/VertexColorShader`
 ## 1.0.0
 ### 🎉 MAJOR RELEASE: Fully Functional Voxel Rendering System
 - **CRITICAL FIX**: Resolved coordinate transformation bug causing single-layer voxel rendering
