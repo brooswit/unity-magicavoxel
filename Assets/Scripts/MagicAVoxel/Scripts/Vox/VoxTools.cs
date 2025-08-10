@@ -5,10 +5,10 @@ using UnityEngine;
 
 public static class VoxTools
 {
-    public static (VoxModel[] frames, VoxPalette palette) ParseVoxData(byte[] rawVoxData)
+    public static (VoxFrame[] frames, VoxPalette palette) ParseVoxData(byte[] rawVoxData)
     {
         // Storage for multiple frames
-        var frames = new List<VoxModel>();
+        var frames = new List<VoxFrame>();
         var tempPalette = VoxPalette.CreateDefault();
         
         // Current model being parsed
@@ -54,7 +54,7 @@ public static class VoxTools
                         {
                             ReadXYZIChunk(reader, currentVoxels, currentSizeX, currentSizeY, currentSizeZ);
                             // Create VoxModel and add to collection
-                            var model = new VoxModel(currentSizeX, currentSizeY, currentSizeZ, currentVoxels);
+                            var model = new VoxFrame(currentSizeX, currentSizeY, currentSizeZ, currentVoxels);
                             frames.Add(model);
                             
                             // Reset for next model
@@ -90,7 +90,7 @@ public static class VoxTools
         else
         {
             Debug.LogError("No voxel frames found in .vox file.");
-            return (new VoxModel[0], tempPalette);
+            return (new VoxFrame[0], tempPalette);
         }
     }
 
@@ -132,13 +132,13 @@ public static class VoxTools
         return new VoxPalette(colors);
     }
     
-    public static Mesh GenerateMesh(VoxModel voxModel, VoxPalette palette)
+    public static Mesh GenerateMesh(VoxFrame voxModel, VoxPalette palette)
     {
         // Backwards-compatible call with scale = 1
         return GenerateMesh(voxModel, palette, 1f);
     }
 
-    public static Mesh GenerateMesh(VoxModel voxModel, VoxPalette palette, float scale)
+    public static Mesh GenerateMesh(VoxFrame voxModel, VoxPalette palette, float scale)
     {
         var mesh = new Mesh { indexFormat = UnityEngine.Rendering.IndexFormat.UInt32 };
         

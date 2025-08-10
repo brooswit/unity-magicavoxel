@@ -4,25 +4,25 @@ using UnityEngine;
 public class VoxData
 {
     public VoxPalette palette;
-    public VoxModel[] frames;
+    public VoxFrame[] frames;
     
     public VoxData()
     {
         palette = new VoxPalette();
-        frames = new VoxModel[0];
+        frames = new VoxFrame[0];
     }
     
-    public VoxData(VoxPalette palette, VoxModel[] frames)
+    public VoxData(VoxPalette palette, VoxFrame[] frames)
     {
         this.palette = palette ?? new VoxPalette();
-        this.frames = frames ?? new VoxModel[0];
+        this.frames = frames ?? new VoxFrame[0];
     }
     
     // Constructor with Color32[] for backward compatibility
-    public VoxData(Color32[] paletteColors, VoxModel[] frames)
+    public VoxData(Color32[] paletteColors, VoxFrame[] frames)
     {
         this.palette = new VoxPalette(paletteColors);
-        this.frames = frames ?? new VoxModel[0];
+        this.frames = frames ?? new VoxFrame[0];
     }
     
     // Constructor from raw .vox file data - handles parsing only
@@ -31,7 +31,7 @@ public class VoxData
         if (rawVoxData == null || rawVoxData.Length == 0)
         {
             palette = new VoxPalette();
-            frames = new VoxModel[0];
+            frames = new VoxFrame[0];
             return;
         }
         
@@ -42,7 +42,7 @@ public class VoxData
         {
             // Parsing failed - create empty data
             palette = new VoxPalette();
-            frames = new VoxModel[0];
+            frames = new VoxFrame[0];
             return;
         }
         
@@ -57,15 +57,15 @@ public class VoxData
         if (other == null)
         {
             palette = new VoxPalette();
-            frames = new VoxModel[0];
+            frames = new VoxFrame[0];
             return;
         }
         
         // Clone palette
         palette = new VoxPalette(other.palette);
         
-        // Clone frames array (shallow copy - VoxModel instances are shared)
-        frames = new VoxModel[other.frames.Length];
+        // Clone frames array (shallow copy - VoxFrame instances are shared)
+        frames = new VoxFrame[other.frames.Length];
         System.Array.Copy(other.frames, frames, other.frames.Length);
     }
 } 

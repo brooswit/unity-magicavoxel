@@ -1,7 +1,7 @@
 using UnityEngine;
 
 [System.Serializable]
-public class VoxModel
+public class VoxFrame
 {
     public int sizeX;
     public int sizeY;
@@ -11,7 +11,7 @@ public class VoxModel
     [SerializeField] private byte[] voxelData;
     
     // Constructor with byte array
-    public VoxModel(int sizeX, int sizeY, int sizeZ, byte[] voxelData)
+    public VoxFrame(int sizeX, int sizeY, int sizeZ, byte[] voxelData)
     {
         this.sizeX = sizeX;
         this.sizeY = sizeY;

@@ -13,7 +13,7 @@
 ## 1.0.0
 ### 🎉 MAJOR RELEASE: Fully Functional Voxel Rendering System
 - **CRITICAL FIX**: Resolved coordinate transformation bug causing single-layer voxel rendering
-  - Fixed VoxModel.GetArrayIndex to properly reverse coordinate transformation
+  - Fixed VoxFrame.GetArrayIndex to properly reverse coordinate transformation
   - Mesh generation now renders complete 3D models instead of thin slices
   - Coordinate system properly maps between .vox storage and Unity rendering
 - **FIX**: Resolved CS0102 compiler error by renaming UpdateCollider method to UpdateMeshCollider
