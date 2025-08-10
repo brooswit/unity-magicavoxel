@@ -27,6 +27,10 @@ public class VoxelDefinition : MonoBehaviour
     // Key: (paletteName, frameIndex), Value: Mesh
     private Dictionary<(string, int), Mesh> _meshCache = new Dictionary<(string, int), Mesh>();
     
+    // Registry of palettes available for JIT generation
+    // Key: paletteName, Value: VoxPalette instance
+    private Dictionary<string, VoxPalette> _paletteRegistry = new Dictionary<string, VoxPalette>();
+    
     // Cache for parsed vox data
     private VoxData _cachedVoxData;
     
@@ -68,6 +72,7 @@ public class VoxelDefinition : MonoBehaviour
 
     /// <summary>
     /// Registers a new palette for use with just-in-time mesh generation.
+    /// Stores the palette in the registry so GetPalette can retrieve it.
     /// </summary>
     /// <param name="palette">Image palette to register</param>
     /// <returns>Name of the registered palette (filename)</returns>
@@ -85,13 +90,20 @@ public class VoxelDefinition : MonoBehaviour
             return string.Empty;
         }
         
-        // Just return the palette name - meshes will be generated on-demand
-        return palette.name;
+        string paletteName = string.IsNullOrEmpty(palette.name) ? Guid.NewGuid().ToString() : palette.name;
+        var voxPalette = VoxPalette.CreateFromTexture(palette);
+        if (voxPalette == null)
+        {
+            Debug.LogError($"VoxelDefinition '{name}': Failed to create VoxPalette from texture '{paletteName}'");
+            return string.Empty;
+        }
+        
+        _paletteRegistry[paletteName] = voxPalette;
+        return paletteName;
     }
     
     /// <summary>
-    /// Creates a custom palette with color overrides for use with just-in-time mesh generation.
-    /// Note: With JIT approach, custom palettes are not persistent and will be recreated on-demand.
+    /// Creates and registers a custom palette with color overrides for JIT mesh generation.
     /// </summary>
     /// <param name="colorOverrides">Dictionary of palette index to color overrides</param>
     /// <param name="name">Optional name for the palette (defaults to UUID)</param>
@@ -113,12 +125,19 @@ public class VoxelDefinition : MonoBehaviour
         // Generate palette name
         string paletteName = string.IsNullOrEmpty(name) ? Guid.NewGuid().ToString() : name;
         
-        // Track as custom palette
-        _customPaletteNames.Add(paletteName);
+        // Create custom palette by starting with base palette and applying overrides
+        var customPalette = new VoxPalette(_cachedVoxData.palette);
+        foreach (var kvp in colorOverrides)
+        {
+            if (kvp.Key >= 0 && kvp.Key < 256)
+            {
+                customPalette[kvp.Key] = kvp.Value;
+            }
+        }
         
-        // Note: Custom palette will be recreated on-demand in GetPalette()
-        // This is a limitation of the JIT approach
-        Debug.LogWarning($"VoxelDefinition '{this.name}': Custom palette '{paletteName}' created but will need to be recreated for each mesh generation. Consider using RegisterPalette() with a Texture2D instead for better performance.");
+        // Register and track custom palette
+        _paletteRegistry[paletteName] = customPalette;
+        _customPaletteNames.Add(paletteName);
         
         return paletteName;
     }
@@ -150,7 +169,8 @@ public class VoxelDefinition : MonoBehaviour
             _meshCache.Remove(key);
         }
         
-        // Remove from custom palette tracking
+        // Remove from registries
+        _paletteRegistry.Remove(paletteName);
         _customPaletteNames.Remove(paletteName);
     }
 
@@ -269,6 +289,12 @@ public class VoxelDefinition : MonoBehaviour
     
     private VoxPalette GetPalette(string paletteName)
     {
+        // Check registered palettes first
+        if (!string.IsNullOrEmpty(paletteName) && _paletteRegistry.TryGetValue(paletteName, out var registered))
+        {
+            return registered;
+        }
+        
         if (paletteName == "default")
         {
             return _cachedVoxData?.palette;
@@ -281,14 +307,16 @@ public class VoxelDefinition : MonoBehaviour
             {
                 if (paletteTexture != null && paletteTexture.name == paletteName)
                 {
-                    return VoxPalette.CreateFromTexture(paletteTexture);
+                    // Cache into registry for future lookups
+                    var vp = VoxPalette.CreateFromTexture(paletteTexture);
+                    if (vp != null) _paletteRegistry[paletteName] = vp;
+                    return vp;
                 }
             }
         }
         
-        // For custom palettes, we'll need to regenerate them on-demand
-        // This is a limitation of the JIT approach - custom palettes aren't persistent
-        Debug.LogWarning($"VoxelDefinition '{name}': Palette '{paletteName}' not found. Custom palettes need to be recreated.");
+        // Not found
+        Debug.LogWarning($"VoxelDefinition '{name}': Palette '{paletteName}' not found. Falling back to default.");
         return _cachedVoxData?.palette; // Fallback to default
     }
 
@@ -303,6 +331,7 @@ public class VoxelDefinition : MonoBehaviour
                 DestroyImmediate(mesh);
         }
         _meshCache.Clear();
+        _paletteRegistry.Clear();
         _customPaletteNames.Clear();
         _cachedVoxData = null;
     }
