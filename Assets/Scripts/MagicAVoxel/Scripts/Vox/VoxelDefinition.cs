@@ -27,9 +27,7 @@ public class VoxelDefinition : MonoBehaviour
     // Key: (paletteName, frameIndex), Value: Mesh
     private Dictionary<(string, int), Mesh> _meshCache = new Dictionary<(string, int), Mesh>();
     
-    // Registry of palettes available for JIT generation
-    // Key: paletteName, Value: VoxPalette instance
-    private Dictionary<string, VoxPalette> _paletteRegistry = new Dictionary<string, VoxPalette>();
+    // Palettes are sourced from default data and serialized extraPalettes
     
     // Cache for parsed vox data
     private VoxData _cachedVoxData;
@@ -90,14 +88,6 @@ public class VoxelDefinition : MonoBehaviour
         }
         
         string paletteName = string.IsNullOrEmpty(palette.name) ? Guid.NewGuid().ToString() : palette.name;
-        var voxPalette = VoxPalette.CreateFromTexture(palette);
-        if (voxPalette == null)
-        {
-            Debug.LogError($"VoxelDefinition '{name}': Failed to create VoxPalette from texture '{paletteName}'");
-            return string.Empty;
-        }
-        
-        _paletteRegistry[paletteName] = voxPalette;
 
         // Ensure it's also visible/serializable via extraPalettes if not already present
         bool exists = false;
@@ -152,7 +142,7 @@ public class VoxelDefinition : MonoBehaviour
         }
         
         // Remove from registries
-        _paletteRegistry.Remove(paletteName);
+        // no registry to remove from
 
         // Remove from extraPalettes by name if present
         if (extraPalettes != null && extraPalettes.Length > 0)
@@ -282,12 +272,6 @@ public class VoxelDefinition : MonoBehaviour
     
     private VoxPalette GetPalette(string paletteName)
     {
-        // Check registered palettes first
-        if (!string.IsNullOrEmpty(paletteName) && _paletteRegistry.TryGetValue(paletteName, out var registered))
-        {
-            return registered;
-        }
-        
         if (paletteName == "default")
         {
             return _cachedVoxData?.palette;
@@ -300,10 +284,7 @@ public class VoxelDefinition : MonoBehaviour
             {
                 if (paletteTexture != null && paletteTexture.name == paletteName)
                 {
-                    // Cache into registry for future lookups
-                    var vp = VoxPalette.CreateFromTexture(paletteTexture);
-                    if (vp != null) _paletteRegistry[paletteName] = vp;
-                    return vp;
+                    return VoxPalette.CreateFromTexture(paletteTexture);
                 }
             }
         }
@@ -324,7 +305,6 @@ public class VoxelDefinition : MonoBehaviour
                 DestroyImmediate(mesh);
         }
         _meshCache.Clear();
-        _paletteRegistry.Clear();
         _cachedVoxData = null;
     }
 }
