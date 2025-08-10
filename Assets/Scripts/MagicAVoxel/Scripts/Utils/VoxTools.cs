@@ -185,11 +185,12 @@ public static class VoxTools
             new Vector3[] { new Vector3(0, 1, 0), new Vector3(1, 1, 0), new Vector3(1, 0, 0), new Vector3(0, 0, 0) },
         };
 
-        // Center calculation to match axis adjustments
+        // Center pivot without ad-hoc offsets. Keep axis mapping pos = (x, z, -y)
+        // so center in that space is (sizeX/2, sizeZ/2, -sizeY/2)
         Vector3 center = new Vector3(
-            (voxModel.sizeX) / 2f,
-            (voxModel.sizeZ) / 2f,
-            -(voxModel.sizeY) / 2f + 1f
+            voxModel.sizeX / 2f,
+            voxModel.sizeZ / 2f,
+            -voxModel.sizeY / 2f
         );
 
         // Iterate through all possible voxel positions

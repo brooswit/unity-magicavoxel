@@ -98,7 +98,7 @@ Shader "Custom/VoxelURPVertexColor"
                 #if defined(_ADDITIONAL_LIGHTS)
 
                 // Additional light loop for non-main directional lights (Forward+ specific)
-                #if USE_CLUSTER_LIGHT_LOOP
+                #if defined(_CLUSTER_LIGHT_LOOP)
                 UNITY_LOOP for (uint lightIndex = 0; lightIndex < min(URP_FP_DIRECTIONAL_LIGHTS_COUNT, MAX_VISIBLE_LIGHTS); lightIndex++)
                 {
                     Light additionalLight = GetAdditionalLight(lightIndex, inputData.positionWS, half4(1,1,1,1));

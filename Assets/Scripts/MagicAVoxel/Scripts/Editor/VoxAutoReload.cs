@@ -19,8 +19,10 @@ public class VoxAutoReload : AssetPostprocessor
                 VoxelDefinition[] allDefinitions = Object.FindObjectsByType<VoxelDefinition>(FindObjectsSortMode.None);
                 foreach (VoxelDefinition voxelDefinition in allDefinitions)
                 {
-                    bool shouldReloadModel = voxelDefinition.voxAsset == null || 
-                        AssetDatabase.GetAssetPath(voxelDefinition.voxAsset) == assetPath;
+                    if (voxelDefinition.voxAsset == null)
+                        continue; // do not trigger reloads based on null assets
+
+                    bool shouldReloadModel = AssetDatabase.GetAssetPath(voxelDefinition.voxAsset) == assetPath;
                     
                     if (shouldReloadModel)
                     {

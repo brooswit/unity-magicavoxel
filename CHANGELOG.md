@@ -1,4 +1,15 @@
 # CHANGELOG
+## 1.1.1
+### Stability and URP fixes
+- Fix compile error in `VoxelDefinition.RegisterPalette` (use `_cachedVoxData.frames`)
+- Guard editor-only API in `VoxelMeshSelector.OnValidate` with `#if UNITY_EDITOR`
+- Prevent event subscription leaks when switching `VoxelDefinition` references
+- Correct mesh pivot centering in `VoxTools.GenerateMesh` (remove ad-hoc +1 and sign flip)
+- Update shader macro to `#if defined(_CLUSTER_LIGHT_LOOP)` in `VoxelURPVertexColor`
+- Improve `VoxAutoReload` to only reload when the changed `.vox` matches the component's asset
+- Raise reimport event in `VoxImporter` (`VoxAsset.RaiseReimported`)
+- Update `GetAvailablePalettes` to include `default` and names from `extraPalettes`
+- Sync README with current on-demand mesh generation and palette API
 ## 1.1.0
 ### Simplify Shaders and Finalize URP Lighting
 - Remove legacy shaders and tests; keep a single, clean shader: `Custom/VoxelURPVertexColor`

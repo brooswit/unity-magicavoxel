@@ -19,5 +19,8 @@ public class VoxImporter : ScriptedImporter
         voxAsset.name = Path.GetFileNameWithoutExtension(ctx.assetPath);
         ctx.AddObjectToAsset("main obj", voxAsset);
         ctx.SetMainObject(voxAsset);
+
+        // Notify listeners that this vox asset has been (re)imported
+        VoxAsset.RaiseReimported(voxAsset);
     }
 }

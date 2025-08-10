@@ -8,36 +8,27 @@ Dynamically load MagicaVoxel .vox models in real-time within Unity3D.
 Responsible for holding the raw voxel data from .vox files.
 
 ### VoxelDefinition (MonoBehaviour)
-A MonoBehaviour component that manages voxel model data and palette caching.
+A MonoBehaviour component that manages voxel model data and on-demand mesh generation/caching.
 
 **Inspector Variables:**
-- Public variable referencing a voxel file
-- Array of images (extra palettes)
+- Reference to a `.vox` asset (`VoxAsset`)
+- Array of palette textures (`extraPalettes`)
 
 **Functionality:**
-- Generates and caches meshes for all model frames using the default palette from voxel data
-- For each image palette in the array, caches meshes for all model frames using that palette (named `default`)
+- Parses `.vox` data once and keeps `frames` and `palette` in memory
+- Generates meshes on-demand per frame and palette, caches results by `(paletteName, frame, scale)`
 
-**Methods:**
+**Key Methods:**
 
-#### `registerPalette(Image palette) → string`
-- Takes an image palette as input
-- Caches meshes for all model frames using the provided palette
-- Returns the palette name (filename of the palette)
+#### `RegisterPalette(Texture2D palette) → string`
+- Registers a texture-based palette by name (texture name); also adds to `extraPalettes` if not present
+- Returns the palette name
 
-#### `customPalette(Dictionary<int, Color> overrides, string name = null) → string`
-- Takes a dictionary of palette index/color pairs as overrides to the default palette
-- Optional name parameter (defaults to UUID if not provided)
-- Caches meshes for all model frames using the custom palette
-- Returns the custom palette name
+#### `RemovePalette(string paletteName) → void`
+- Clears cached meshes for that palette and removes any matching texture from `extraPalettes`
 
-#### `removePalette(string paletteName) → void`
-- Takes a palette name as input
-- Removes the cached model frames for the specified palette
-
-#### `getMesh(int frame, string paletteName = null) → Mesh`
-- Takes a frame index and optional palette name
-- Returns the cached mesh for the specified frame and palette
+#### `GetMesh(int frame, string paletteName = null) → Mesh`
+- Returns a mesh for the frame/palette, generating and caching if needed (uses the component `scale` field)
 
 ### VoxelMeshSelector (MonoBehaviour)
 A component that selects and displays specific frames and palettes from a VoxelDefinition.
@@ -49,22 +40,11 @@ A component that selects and displays specific frames and palettes from a VoxelD
 
 **Methods:**
 
-#### `updateMesh()` (private)
-- Calls `getMesh()` on the referenced VoxelDefinition
-- Assigns the returned mesh to the GameObject's mesh renderer and collider
+#### `SelectFrame(int frame) → void`
+- Sets the frame index and updates the mesh
 
-#### `selectFrame(int frame) → void`
-- Updates the frame variable
-- Calls `updateMesh()`
-
-#### `selectPalette(string paletteName) → void`
-- Updates the palette variable
-- Calls `updateMesh()`
-
-#### `customPalette(Dictionary<int, Color> overrides, string name = null) → string`
-- Calls the VoxelDefinition's `customPalette()` method
-- Tracks created custom palettes for cleanup
-- When the VoxelMeshSelector is destroyed, automatically calls `removePalette()` for all custom palettes created by this component
+#### `SelectPalette(string paletteName) → void`
+- Sets the palette name and updates the mesh
 
 **Automatic Updates:**
-- If frame or palette values are changed outside of the `selectFrame()` or `selectPalette()` methods, the component automatically calls the appropriate method with the new values to maintain synchronization.
+- If frame or palette values change externally, the component detects the change and updates the mesh.

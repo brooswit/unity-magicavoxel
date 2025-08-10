@@ -84,7 +84,7 @@ public class VoxelDefinition : MonoBehaviour
             return string.Empty;
         }
         
-        if (_cachedVoxData?.models == null)
+        if (_cachedVoxData?.frames == null)
         {
             Debug.LogError("VoxelDefinition: No vox data available");
             return string.Empty;
@@ -168,7 +168,6 @@ public class VoxelDefinition : MonoBehaviour
     /// </summary>
     /// <param name="frame">Frame index</param>
     /// <param name="paletteName">Optional palette name (defaults to "default")</param>
-    /// <param name="scale">Scale to apply to the generated mesh vertices (1.0 = 1 unit per voxel)</param>
     /// <returns>Generated mesh or null if generation failed</returns>
     public Mesh GetMesh(int frame, string paletteName = null)
     {
@@ -233,14 +232,33 @@ public class VoxelDefinition : MonoBehaviour
     /// </summary>
     public string[] GetAvailablePalettes()
     {
-        var palettes = new HashSet<string>();
-        
+        var paletteNames = new HashSet<string>();
+
+        // Always include default if vox data is available
+        if (_cachedVoxData?.palette != null)
+        {
+            paletteNames.Add("default");
+        }
+
+        // Include any extra palettes by name
+        if (extraPalettes != null)
+        {
+            foreach (var tex in extraPalettes)
+            {
+                if (tex != null && !string.IsNullOrEmpty(tex.name))
+                {
+                    paletteNames.Add(tex.name);
+                }
+            }
+        }
+
+        // Also include any palette names already used in the cache
         foreach (var key in _meshCache.Keys)
         {
-            palettes.Add(key.Item1);
+            paletteNames.Add(key.Item1);
         }
-        
-        return new List<string>(palettes).ToArray();
+
+        return new List<string>(paletteNames).ToArray();
     }
     
     //=========================================================================

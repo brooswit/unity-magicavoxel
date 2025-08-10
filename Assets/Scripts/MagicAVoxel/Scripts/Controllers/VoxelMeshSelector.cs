@@ -127,12 +127,14 @@ public class VoxelMeshSelector : MonoBehaviour
         else
         {
             // In editor, schedule the update for the next editor update
+            #if UNITY_EDITOR
             UnityEditor.EditorApplication.delayCall += () => {
                 if (this != null) // Check if object still exists
                 {
                     UpdateMesh();
                 }
             };
+            #endif
         }
     }
     
@@ -306,15 +308,23 @@ public class VoxelMeshSelector : MonoBehaviour
     //-------------------------------------------------------------------------
     // Event Management
     
+    private VoxelDefinition _previousVoxelDefinition;
+
     private void SubscribeToVoxelDefinitionEvents()
     {
-        // Unsubscribe first to avoid duplicate subscriptions
-        UnsubscribeFromVoxelDefinitionEvents();
-        
+        // Unsubscribe from previous instance if changed
+        if (_previousVoxelDefinition != null && _previousVoxelDefinition != voxelDefinition)
+        {
+            _previousVoxelDefinition.OnCacheReinitialized -= OnVoxelDefinitionCacheReinitialized;
+        }
+
         if (voxelDefinition != null)
         {
+            voxelDefinition.OnCacheReinitialized -= OnVoxelDefinitionCacheReinitialized; // avoid duplicates
             voxelDefinition.OnCacheReinitialized += OnVoxelDefinitionCacheReinitialized;
         }
+
+        _previousVoxelDefinition = voxelDefinition;
     }
     
     private void UnsubscribeFromVoxelDefinitionEvents()
@@ -322,6 +332,10 @@ public class VoxelMeshSelector : MonoBehaviour
         if (voxelDefinition != null)
         {
             voxelDefinition.OnCacheReinitialized -= OnVoxelDefinitionCacheReinitialized;
+        }
+        if (_previousVoxelDefinition != null)
+        {
+            _previousVoxelDefinition.OnCacheReinitialized -= OnVoxelDefinitionCacheReinitialized;
         }
     }
     
