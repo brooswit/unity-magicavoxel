@@ -23,8 +23,8 @@ public class VoxelDefinition : MonoBehaviour
     //=========================================================================
     // Internal variables
 
-    // Internal cache for mesh data per palette, frame and voxelsPerUnit
-    // Key: (paletteName, frameIndex, voxelsPerUnit), Value: Mesh
+    // Internal cache for mesh data per palette, frame and scale
+    // Key: (paletteName, frameIndex, scale), Value: Mesh
     private Dictionary<(string, int, float), Mesh> _meshCache = new Dictionary<(string, int, float), Mesh>();
     
     // Palettes are sourced from default data and serialized extraPalettes
@@ -165,9 +165,9 @@ public class VoxelDefinition : MonoBehaviour
     /// </summary>
     /// <param name="frame">Frame index</param>
     /// <param name="paletteName">Optional palette name (defaults to "default")</param>
-    /// <param name="voxelsPerUnit">Number of voxels that fit in one Unity unit (e.g., 16 => scale = 1/16)</param>
+    /// <param name="scale">Scale to apply to the generated mesh vertices (1.0 = 1 unit per voxel)</param>
     /// <returns>Generated mesh or null if generation failed</returns>
-    public Mesh GetMesh(int frame, string paletteName = null, float voxelsPerUnit = 1f)
+    public Mesh GetMesh(int frame, string paletteName = null, float scale = 1f)
     {
         if (string.IsNullOrEmpty(paletteName))
             paletteName = "default";
@@ -184,7 +184,7 @@ public class VoxelDefinition : MonoBehaviour
             return null;
         }
         
-        var key = (paletteName, frame, voxelsPerUnit);
+        var key = (paletteName, frame, scale);
         
         // Return cached if available
         if (_meshCache.TryGetValue(key, out var mesh)) 
@@ -200,11 +200,11 @@ public class VoxelDefinition : MonoBehaviour
         
         try
         {
-            float effectiveScale = voxelsPerUnit > 0f ? 1f / voxelsPerUnit : 1f;
+            float effectiveScale = Mathf.Max(0.0001f, scale);
             mesh = VoxTools.GenerateMesh(_cachedVoxData.models[frame], palette, effectiveScale);
             if (mesh != null)
             {
-                mesh.name = $"VoxelMesh_{voxAsset.name}_{paletteName}_{frame}_vpu{voxelsPerUnit}";
+                mesh.name = $"VoxelMesh_{voxAsset.name}_{paletteName}_{frame}_s{effectiveScale}";
                 _meshCache[key] = mesh;
             }
         }
