@@ -34,8 +34,7 @@ public class VoxelDefinition : MonoBehaviour
     // Cache for parsed vox data
     private VoxData _cachedVoxData;
     
-    // Track custom palettes for cleanup
-    private HashSet<string> _customPaletteNames = new HashSet<string>();
+    // Custom palettes are no longer supported; use RegisterPalette(Texture2D)
     
     // Event fired when cache is reinitialized (for dependent components)
     public System.Action OnCacheReinitialized;
@@ -102,45 +101,7 @@ public class VoxelDefinition : MonoBehaviour
         return paletteName;
     }
     
-    /// <summary>
-    /// Creates and registers a custom palette with color overrides for JIT mesh generation.
-    /// </summary>
-    /// <param name="colorOverrides">Dictionary of palette index to color overrides</param>
-    /// <param name="name">Optional name for the palette (defaults to UUID)</param>
-    /// <returns>Name of the custom palette</returns>
-    public string CustomPalette(Dictionary<int, Color> colorOverrides, string name = null)
-    {
-        if (colorOverrides == null || colorOverrides.Count == 0)
-        {
-            Debug.LogError("VoxelDefinition: Color overrides cannot be null or empty");
-            return string.Empty;
-        }
-        
-        if (_cachedVoxData?.models == null)
-        {
-            Debug.LogError("VoxelDefinition: No vox data available");
-            return string.Empty;
-        }
-        
-        // Generate palette name
-        string paletteName = string.IsNullOrEmpty(name) ? Guid.NewGuid().ToString() : name;
-        
-        // Create custom palette by starting with base palette and applying overrides
-        var customPalette = new VoxPalette(_cachedVoxData.palette);
-        foreach (var kvp in colorOverrides)
-        {
-            if (kvp.Key >= 0 && kvp.Key < 256)
-            {
-                customPalette[kvp.Key] = kvp.Value;
-            }
-        }
-        
-        // Register and track custom palette
-        _paletteRegistry[paletteName] = customPalette;
-        _customPaletteNames.Add(paletteName);
-        
-        return paletteName;
-    }
+    // Custom palettes removed. Prefer creating a full Texture2D palette and calling RegisterPalette.
     
     /// <summary>
     /// Removes cached model frames for the specified palette.
@@ -171,7 +132,18 @@ public class VoxelDefinition : MonoBehaviour
         
         // Remove from registries
         _paletteRegistry.Remove(paletteName);
-        _customPaletteNames.Remove(paletteName);
+
+        // Remove from extraPalettes by name if present
+        if (extraPalettes != null && extraPalettes.Length > 0)
+        {
+            var list = new List<Texture2D>(extraPalettes.Length);
+            foreach (var tex in extraPalettes)
+            {
+                if (tex == null || tex.name != paletteName)
+                    list.Add(tex);
+            }
+            extraPalettes = list.ToArray();
+        }
     }
 
     //-------------------------------------------------------------------------
@@ -332,7 +304,6 @@ public class VoxelDefinition : MonoBehaviour
         }
         _meshCache.Clear();
         _paletteRegistry.Clear();
-        _customPaletteNames.Clear();
         _cachedVoxData = null;
     }
 }
