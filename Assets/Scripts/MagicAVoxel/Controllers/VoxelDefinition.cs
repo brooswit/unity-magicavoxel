@@ -136,7 +136,7 @@ public class VoxelDefinition : MonoBehaviour
     {
         if (string.IsNullOrEmpty(paletteName)) return;
         
-        var keysToRemove = new List<(string, int, float)>();
+        var keysToRemove = new List<(string, int, float, int, float)>();
         
         foreach (var key in _meshCache.Keys)
         {
