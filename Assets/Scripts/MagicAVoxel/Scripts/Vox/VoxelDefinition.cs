@@ -23,9 +23,9 @@ public class VoxelDefinition : MonoBehaviour
     //=========================================================================
     // Internal variables
 
-    // Internal cache for mesh data per palette and frame
-    // Key: (paletteName, frameIndex), Value: Mesh
-    private Dictionary<(string, int), Mesh> _meshCache = new Dictionary<(string, int), Mesh>();
+    // Internal cache for mesh data per palette, frame and voxelsPerUnit
+    // Key: (paletteName, frameIndex, voxelsPerUnit), Value: Mesh
+    private Dictionary<(string, int, float), Mesh> _meshCache = new Dictionary<(string, int, float), Mesh>();
     
     // Palettes are sourced from default data and serialized extraPalettes
     
@@ -122,7 +122,7 @@ public class VoxelDefinition : MonoBehaviour
     {
         if (string.IsNullOrEmpty(paletteName)) return;
         
-        var keysToRemove = new List<(string, int)>();
+        var keysToRemove = new List<(string, int, float)>();
         
         foreach (var key in _meshCache.Keys)
         {
@@ -184,7 +184,7 @@ public class VoxelDefinition : MonoBehaviour
             return null;
         }
         
-        var key = (paletteName, frame);
+        var key = (paletteName, frame, voxelsPerUnit);
         
         // Return cached if available
         if (_meshCache.TryGetValue(key, out var mesh)) 
