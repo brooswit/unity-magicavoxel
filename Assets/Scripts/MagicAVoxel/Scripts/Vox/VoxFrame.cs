@@ -20,15 +20,6 @@ public class VoxFrame
         this.voxelData = voxelData ?? new byte[sizeX * sizeY * sizeZ];
     }
     
-    public void SetVoxel(Vector3 position, byte colorIndex)
-    {
-        int index = GetArrayIndex(position);
-        if (index >= 0 && index < voxelData.Length)
-        {
-            voxelData[index] = colorIndex;
-        }
-    }
-    
     public byte GetVoxel(Vector3 position)
     {
         int index = GetArrayIndex(position);
