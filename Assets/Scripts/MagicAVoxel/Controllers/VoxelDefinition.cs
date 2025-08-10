@@ -9,9 +9,20 @@ using System;
 [ExecuteInEditMode]
 public class VoxelDefinition : MonoBehaviour
 {
+    public enum MeshingMode
+    {
+        Cubic = 0,
+        MarchingCubes = 1
+    }
+
     [Header("Generation Settings")]
     [Tooltip("Scale applied when generating meshes (1.0 = 1 unit per voxel)")]
     public float scale = 1f;
+    [Tooltip("Meshing algorithm used to generate the surface")] 
+    public MeshingMode meshingMode = MeshingMode.Cubic;
+    [Range(0f, 1f)]
+    [Tooltip("Smoothing strength for Marching Cubes (0 = none, 1 = strong blur)")]
+    public float smoothness = 0.2f;
     //=========================================================================
     // Public variables
 
@@ -26,9 +37,9 @@ public class VoxelDefinition : MonoBehaviour
     //=========================================================================
     // Internal variables
 
-    // Internal cache for mesh data per palette, frame and scale
-    // Key: (paletteName, frameIndex, scale), Value: Mesh
-    private Dictionary<(string, int, float), Mesh> _meshCache = new Dictionary<(string, int, float), Mesh>();
+    // Internal cache for mesh data per palette, frame, scale, meshing mode, and smoothness
+    // Key: (paletteName, frameIndex, scale, mode, smoothness), Value: Mesh
+    private Dictionary<(string, int, float, int, float), Mesh> _meshCache = new Dictionary<(string, int, float, int, float), Mesh>();
     
     // Palettes are sourced from default data and serialized extraPalettes
     
@@ -186,7 +197,7 @@ public class VoxelDefinition : MonoBehaviour
             return null;
         }
         
-        var key = (paletteName, frame, scale);
+        var key = (paletteName, frame, scale, (int)meshingMode, Mathf.Round(smoothness * 1000f) / 1000f);
         
         // Return cached if available
         if (_meshCache.TryGetValue(key, out var mesh)) 
@@ -203,10 +214,18 @@ public class VoxelDefinition : MonoBehaviour
         try
         {
             float effectiveScale = Mathf.Max(0.0001f, scale);
-            mesh = VoxTools.GenerateMesh(_cachedVoxData.frames[frame], palette, effectiveScale);
+            if (meshingMode == MeshingMode.Cubic)
+            {
+                mesh = VoxTools.GenerateMesh(_cachedVoxData.frames[frame], palette, effectiveScale);
+            }
+            else
+            {
+                float clampedSmoothness = Mathf.Clamp01(smoothness);
+                mesh = MarchingCubes.GenerateMesh(_cachedVoxData.frames[frame], palette, effectiveScale, clampedSmoothness);
+            }
             if (mesh != null)
             {
-                mesh.name = $"VoxelMesh_{voxAsset.name}_{paletteName}_{frame}_s{effectiveScale}";
+                mesh.name = $"VoxelMesh_{voxAsset.name}_{paletteName}_{frame}_{meshingMode}_s{effectiveScale}_sm{smoothness:0.00}";
                 _meshCache[key] = mesh;
             }
         }
@@ -331,3 +350,4 @@ public class VoxelDefinition : MonoBehaviour
         _cachedVoxData = null;
     }
 }
+
