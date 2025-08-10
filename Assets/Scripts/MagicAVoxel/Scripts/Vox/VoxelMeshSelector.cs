@@ -22,8 +22,6 @@ public class VoxelMeshSelector : MonoBehaviour
     [Tooltip("Name of the palette to use")]
     [SerializeField] private string _paletteName = "default";
 
-    [Tooltip("Scale applied when generating the mesh (vertex positions scaled)")]
-    [SerializeField] private float _scale = 1f;
     
     [Header("Collider Settings")]
     [Tooltip("Whether to automatically update the mesh collider when mesh changes")]
@@ -43,7 +41,7 @@ public class VoxelMeshSelector : MonoBehaviour
     // Previous values for change detection
     private int _previousFrame = -1;
     private string _previousPaletteName = string.Empty;
-    private float _previousScale = -1f;
+    
     private bool _previousHasRigidbody = false;
     
     //=========================================================================
@@ -61,19 +59,7 @@ public class VoxelMeshSelector : MonoBehaviour
         set => SelectPalette(value);
     }
 
-    public float Scale
-    {
-        get => _scale;
-        set
-        {
-            float clamped = Mathf.Max(0.0001f, value);
-            if (!Mathf.Approximately(_scale, clamped))
-            {
-                _scale = clamped;
-                UpdateMesh();
-            }
-        }
-    }
+    
     
     public bool UpdateCollider
     {
@@ -125,11 +111,7 @@ public class VoxelMeshSelector : MonoBehaviour
             }
         }
 
-        // Detect scale changes
-        if (!Mathf.Approximately(_scale, _previousScale))
-        {
-            UpdateMesh();
-        }
+        
     }
     
     void OnValidate()
@@ -248,7 +230,7 @@ public class VoxelMeshSelector : MonoBehaviour
             return;
         }
         
-        var mesh = voxelDefinition.GetMesh(_frame, _paletteName, _scale);
+        var mesh = voxelDefinition.GetMesh(_frame, _paletteName);
         
         if (mesh != null)
         {
@@ -269,7 +251,7 @@ public class VoxelMeshSelector : MonoBehaviour
         // Update tracking variables
         _previousFrame = _frame;
         _previousPaletteName = _paletteName;
-        _previousScale = _scale;
+        
     }
     
     private void ClearMesh()

@@ -9,6 +9,9 @@ using System;
 [ExecuteInEditMode]
 public class VoxelDefinition : MonoBehaviour
 {
+    [Header("Generation Settings")]
+    [Tooltip("Scale applied when generating meshes (1.0 = 1 unit per voxel)")]
+    public float scale = 1f;
     //=========================================================================
     // Public variables
 
@@ -167,7 +170,7 @@ public class VoxelDefinition : MonoBehaviour
     /// <param name="paletteName">Optional palette name (defaults to "default")</param>
     /// <param name="scale">Scale to apply to the generated mesh vertices (1.0 = 1 unit per voxel)</param>
     /// <returns>Generated mesh or null if generation failed</returns>
-    public Mesh GetMesh(int frame, string paletteName = null, float scale = 1f)
+    public Mesh GetMesh(int frame, string paletteName = null)
     {
         if (string.IsNullOrEmpty(paletteName))
             paletteName = "default";
