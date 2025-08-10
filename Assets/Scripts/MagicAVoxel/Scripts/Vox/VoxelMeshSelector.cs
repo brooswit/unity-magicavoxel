@@ -21,6 +21,9 @@ public class VoxelMeshSelector : MonoBehaviour
     
     [Tooltip("Name of the palette to use")]
     [SerializeField] private string _paletteName = "default";
+
+    [Tooltip("Scale applied when generating the mesh (vertex positions scaled)")]
+    [SerializeField] private float _scale = 1f;
     
     [Header("Collider Settings")]
     [Tooltip("Whether to automatically update the mesh collider when mesh changes")]
@@ -37,12 +40,10 @@ public class VoxelMeshSelector : MonoBehaviour
     private MeshRenderer _meshRenderer;
     private MeshCollider _meshCollider;
     
-    // Track custom palettes created by this selector for cleanup
-    private HashSet<string> _ownedCustomPalettes = new HashSet<string>();
-    
     // Previous values for change detection
     private int _previousFrame = -1;
     private string _previousPaletteName = string.Empty;
+    private float _previousScale = -1f;
     private bool _previousHasRigidbody = false;
     
     //=========================================================================
@@ -58,6 +59,20 @@ public class VoxelMeshSelector : MonoBehaviour
     {
         get => _paletteName;
         set => SelectPalette(value);
+    }
+
+    public float Scale
+    {
+        get => _scale;
+        set
+        {
+            float clamped = Mathf.Max(0.0001f, value);
+            if (!Mathf.Approximately(_scale, clamped))
+            {
+                _scale = clamped;
+                UpdateMesh();
+            }
+        }
     }
     
     public bool UpdateCollider
@@ -109,6 +124,12 @@ public class VoxelMeshSelector : MonoBehaviour
                 _previousHasRigidbody = currentHasRigidbody;
             }
         }
+
+        // Detect scale changes
+        if (!Mathf.Approximately(_scale, _previousScale))
+        {
+            UpdateMesh();
+        }
     }
     
     void OnValidate()
@@ -137,17 +158,6 @@ public class VoxelMeshSelector : MonoBehaviour
     {
         // Unsubscribe from VoxelDefinition events
         UnsubscribeFromVoxelDefinitionEvents();
-        
-        // Clean up all custom palettes created by this selector
-        if (voxelDefinition != null)
-        {
-            foreach (string paletteName in _ownedCustomPalettes)
-            {
-                voxelDefinition.RemovePalette(paletteName);
-            }
-        }
-        
-        _ownedCustomPalettes.Clear();
     }
     
     //=========================================================================
@@ -185,50 +195,7 @@ public class VoxelMeshSelector : MonoBehaviour
         UpdateMesh();
     }
 
-    //-------------------------------------------------------------------------
-    // Custom Palette Management
-    
-    /// <summary>
-    /// Creates a temporary custom palette with color overrides specific to this selector.
-    /// The palette will be automatically cleaned up when this component is destroyed.
-    /// </summary>
-    /// <param name="colorOverrides">Dictionary of palette index to color overrides</param>
-    /// <param name="name">Optional name for the palette (defaults to UUID)</param>
-    /// <returns>Name of the created temporary custom palette</returns>
-    public string TemporaryCustomPalette(Dictionary<int, Color> colorOverrides, string name = null)
-    {
-        if (voxelDefinition == null)
-        {
-            Debug.LogError("VoxelMeshSelector: No VoxelDefinition assigned");
-            return string.Empty;
-        }
-        
-        if (colorOverrides == null || colorOverrides.Count == 0)
-        {
-            Debug.LogError("VoxelMeshSelector: Color overrides cannot be null or empty");
-            return string.Empty;
-        }
-        
-        // Generate unique name if not provided
-        if (string.IsNullOrEmpty(name))
-        {
-            name = $"{gameObject.name}_{System.Guid.NewGuid().ToString("N")[..8]}";
-        }
-        
-        // Create the custom palette in the VoxelDefinition
-        string paletteName = voxelDefinition.CustomPalette(colorOverrides, name);
-        
-        if (!string.IsNullOrEmpty(paletteName))
-        {
-            // Track this palette for cleanup
-            _ownedCustomPalettes.Add(paletteName);
-            
-            // Automatically switch to the new palette
-            SelectPalette(paletteName);
-        }
-        
-        return paletteName;
-    }
+    // Custom palette creation removed. Use VoxelDefinition.RegisterPalette(Texture2D).
 
     //-------------------------------------------------------------------------
     // Information & Queries
@@ -281,7 +248,7 @@ public class VoxelMeshSelector : MonoBehaviour
             return;
         }
         
-        var mesh = voxelDefinition.GetMesh(_frame, _paletteName);
+        var mesh = voxelDefinition.GetMesh(_frame, _paletteName, _scale);
         
         if (mesh != null)
         {
@@ -302,6 +269,7 @@ public class VoxelMeshSelector : MonoBehaviour
         // Update tracking variables
         _previousFrame = _frame;
         _previousPaletteName = _paletteName;
+        _previousScale = _scale;
     }
     
     private void ClearMesh()

@@ -165,8 +165,9 @@ public class VoxelDefinition : MonoBehaviour
     /// </summary>
     /// <param name="frame">Frame index</param>
     /// <param name="paletteName">Optional palette name (defaults to "default")</param>
+    /// <param name="scale">Scale to apply to the generated mesh vertices (default 1.0)</param>
     /// <returns>Generated mesh or null if generation failed</returns>
-    public Mesh GetMesh(int frame, string paletteName = null)
+    public Mesh GetMesh(int frame, string paletteName = null, float scale = 1f)
     {
         if (string.IsNullOrEmpty(paletteName))
             paletteName = "default";
@@ -199,10 +200,10 @@ public class VoxelDefinition : MonoBehaviour
         
         try
         {
-            mesh = VoxTools.GenerateMesh(_cachedVoxData.models[frame], palette);
+            mesh = VoxTools.GenerateMesh(_cachedVoxData.models[frame], palette, scale);
             if (mesh != null)
             {
-                mesh.name = $"VoxelMesh_{voxAsset.name}_{paletteName}_{frame}";
+                mesh.name = $"VoxelMesh_{voxAsset.name}_{paletteName}_{frame}_s{scale}";
                 _meshCache[key] = mesh;
             }
         }

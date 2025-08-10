@@ -134,6 +134,12 @@ public static class VoxTools
     
     public static Mesh GenerateMesh(VoxModel voxModel, VoxPalette palette)
     {
+        // Backwards-compatible call with scale = 1
+        return GenerateMesh(voxModel, palette, 1f);
+    }
+
+    public static Mesh GenerateMesh(VoxModel voxModel, VoxPalette palette, float scale)
+    {
         var mesh = new Mesh { indexFormat = UnityEngine.Rendering.IndexFormat.UInt32 };
         
         // Check for null voxel data
@@ -218,6 +224,7 @@ public static class VoxTools
                             {
                                 Vector3 vertexPos = pos + corner;
                                 vertexPos -= center;
+                                vertexPos *= scale;
                                 vertices.Add(vertexPos);
                                 colors.Add(color);
                             }
