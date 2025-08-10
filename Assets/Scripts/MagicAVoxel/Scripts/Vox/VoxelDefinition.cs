@@ -98,6 +98,27 @@ public class VoxelDefinition : MonoBehaviour
         }
         
         _paletteRegistry[paletteName] = voxPalette;
+
+        // Ensure it's also visible/serializable via extraPalettes if not already present
+        bool exists = false;
+        if (extraPalettes != null)
+        {
+            for (int i = 0; i < extraPalettes.Length; i++)
+            {
+                if (extraPalettes[i] != null && extraPalettes[i].name == paletteName)
+                {
+                    exists = true;
+                    break;
+                }
+            }
+        }
+        if (!exists)
+        {
+            var list = new List<Texture2D>(extraPalettes ?? Array.Empty<Texture2D>());
+            list.Add(palette);
+            extraPalettes = list.ToArray();
+        }
+
         return paletteName;
     }
     
