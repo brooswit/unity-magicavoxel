@@ -1,6 +1,11 @@
 # CHANGELOG
 ## 1.1.1
 ### Stability and URP fixes
+## 1.2.0
+### Feature: Marching Cubes and Smoothness
+- Add Marching Cubes meshing option with adjustable `smoothness` (0..1) on `VoxelDefinition`
+- Extend mesh cache key to include meshing mode and smoothness
+- Update README with new inspector options and behavior
 - Fix compile error in `VoxelDefinition.RegisterPalette` (use `_cachedVoxData.frames`)
 - Guard editor-only API in `VoxelMeshSelector.OnValidate` with `#if UNITY_EDITOR`
 - Prevent event subscription leaks when switching `VoxelDefinition` references

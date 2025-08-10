@@ -13,6 +13,8 @@ A MonoBehaviour component that manages voxel model data and on-demand mesh gener
 **Inspector Variables:**
 - Reference to a `.vox` asset (`VoxAsset`)
 - Array of palette textures (`extraPalettes`)
+- Meshing mode (Cubic or MarchingCubes)
+- Scale and Smoothness (smoothness applies to MarchingCubes)
 
 **Functionality:**
 - Parses `.vox` data once and keeps `frames` and `palette` in memory
@@ -29,6 +31,8 @@ A MonoBehaviour component that manages voxel model data and on-demand mesh gener
 
 #### `GetMesh(int frame, string paletteName = null) → Mesh`
 - Returns a mesh for the frame/palette, generating and caching if needed (uses the component `scale` field)
+  - When Meshing Mode = Cubic, generates a blocky voxel surface
+  - When Meshing Mode = MarchingCubes, generates a smoothed surface; `smoothness` controls blur of the scalar field
 
 ### VoxelMeshSelector (MonoBehaviour)
 A component that selects and displays specific frames and palettes from a VoxelDefinition.
