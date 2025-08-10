@@ -22,8 +22,8 @@ public class VoxelMeshSelector : MonoBehaviour
     [Tooltip("Name of the palette to use")]
     [SerializeField] private string _paletteName = "default";
 
-    [Tooltip("Scale applied when generating the mesh (vertex positions scaled)")]
-    [SerializeField] private float _scale = 1f;
+    [Tooltip("Voxels per Unity unit (e.g., 16 => each voxel is 1/16 unit)")]
+    [SerializeField] private float _voxelsPerUnit = 1f;
     
     [Header("Collider Settings")]
     [Tooltip("Whether to automatically update the mesh collider when mesh changes")]
@@ -43,7 +43,7 @@ public class VoxelMeshSelector : MonoBehaviour
     // Previous values for change detection
     private int _previousFrame = -1;
     private string _previousPaletteName = string.Empty;
-    private float _previousScale = -1f;
+    private float _previousVoxelsPerUnit = -1f;
     private bool _previousHasRigidbody = false;
     
     //=========================================================================
@@ -61,15 +61,15 @@ public class VoxelMeshSelector : MonoBehaviour
         set => SelectPalette(value);
     }
 
-    public float Scale
+    public float VoxelsPerUnit
     {
-        get => _scale;
+        get => _voxelsPerUnit;
         set
         {
             float clamped = Mathf.Max(0.0001f, value);
-            if (!Mathf.Approximately(_scale, clamped))
+            if (!Mathf.Approximately(_voxelsPerUnit, clamped))
             {
-                _scale = clamped;
+                _voxelsPerUnit = clamped;
                 UpdateMesh();
             }
         }
@@ -125,8 +125,8 @@ public class VoxelMeshSelector : MonoBehaviour
             }
         }
 
-        // Detect scale changes
-        if (!Mathf.Approximately(_scale, _previousScale))
+        // Detect voxelsPerUnit changes
+        if (!Mathf.Approximately(_voxelsPerUnit, _previousVoxelsPerUnit))
         {
             UpdateMesh();
         }
@@ -248,7 +248,7 @@ public class VoxelMeshSelector : MonoBehaviour
             return;
         }
         
-        var mesh = voxelDefinition.GetMesh(_frame, _paletteName, _scale);
+        var mesh = voxelDefinition.GetMesh(_frame, _paletteName, _voxelsPerUnit);
         
         if (mesh != null)
         {
@@ -269,7 +269,7 @@ public class VoxelMeshSelector : MonoBehaviour
         // Update tracking variables
         _previousFrame = _frame;
         _previousPaletteName = _paletteName;
-        _previousScale = _scale;
+        _previousVoxelsPerUnit = _voxelsPerUnit;
     }
     
     private void ClearMesh()

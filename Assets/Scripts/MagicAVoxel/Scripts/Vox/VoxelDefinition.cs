@@ -165,9 +165,9 @@ public class VoxelDefinition : MonoBehaviour
     /// </summary>
     /// <param name="frame">Frame index</param>
     /// <param name="paletteName">Optional palette name (defaults to "default")</param>
-    /// <param name="scale">Scale to apply to the generated mesh vertices (default 1.0)</param>
+    /// <param name="voxelsPerUnit">Number of voxels that fit in one Unity unit (e.g., 16 => scale = 1/16)</param>
     /// <returns>Generated mesh or null if generation failed</returns>
-    public Mesh GetMesh(int frame, string paletteName = null, float scale = 1f)
+    public Mesh GetMesh(int frame, string paletteName = null, float voxelsPerUnit = 1f)
     {
         if (string.IsNullOrEmpty(paletteName))
             paletteName = "default";
@@ -200,10 +200,11 @@ public class VoxelDefinition : MonoBehaviour
         
         try
         {
-            mesh = VoxTools.GenerateMesh(_cachedVoxData.models[frame], palette, scale);
+            float effectiveScale = voxelsPerUnit > 0f ? 1f / voxelsPerUnit : 1f;
+            mesh = VoxTools.GenerateMesh(_cachedVoxData.models[frame], palette, effectiveScale);
             if (mesh != null)
             {
-                mesh.name = $"VoxelMesh_{voxAsset.name}_{paletteName}_{frame}_s{scale}";
+                mesh.name = $"VoxelMesh_{voxAsset.name}_{paletteName}_{frame}_vpu{voxelsPerUnit}";
                 _meshCache[key] = mesh;
             }
         }
