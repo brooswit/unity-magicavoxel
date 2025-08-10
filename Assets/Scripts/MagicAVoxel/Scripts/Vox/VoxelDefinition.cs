@@ -172,15 +172,15 @@ public class VoxelDefinition : MonoBehaviour
         if (string.IsNullOrEmpty(paletteName))
             paletteName = "default";
         
-        if (_cachedVoxData?.models == null)
+        if (_cachedVoxData?.frames == null)
         {
             Debug.LogError($"VoxelDefinition '{name}': No vox data available");
             return null;
         }
         
-        if (frame < 0 || frame >= _cachedVoxData.models.Length)
+        if (frame < 0 || frame >= _cachedVoxData.frames.Length)
         {
-            Debug.LogError($"VoxelDefinition '{name}': Frame {frame} out of range (0-{_cachedVoxData.models.Length - 1})");
+            Debug.LogError($"VoxelDefinition '{name}': Frame {frame} out of range (0-{_cachedVoxData.frames.Length - 1})");
             return null;
         }
         
@@ -201,7 +201,7 @@ public class VoxelDefinition : MonoBehaviour
         try
         {
             float effectiveScale = Mathf.Max(0.0001f, scale);
-            mesh = VoxTools.GenerateMesh(_cachedVoxData.models[frame], palette, effectiveScale);
+            mesh = VoxTools.GenerateMesh(_cachedVoxData.frames[frame], palette, effectiveScale);
             if (mesh != null)
             {
                 mesh.name = $"VoxelMesh_{voxAsset.name}_{paletteName}_{frame}_s{effectiveScale}";
@@ -222,7 +222,7 @@ public class VoxelDefinition : MonoBehaviour
     /// </summary>
     public int GetFrameCount()
     {
-        return _cachedVoxData?.models?.Length ?? 0;
+        return _cachedVoxData?.frames?.Length ?? 0;
     }
     
     /// <summary>
@@ -257,9 +257,9 @@ public class VoxelDefinition : MonoBehaviour
         // Parse VoxData upfront - no mesh generation
         _cachedVoxData = new VoxData(voxAsset.rawData);
         
-        if (_cachedVoxData?.models == null || _cachedVoxData.models.Length == 0) 
+        if (_cachedVoxData?.frames == null || _cachedVoxData.frames.Length == 0) 
         {
-            Debug.LogWarning($"VoxelDefinition '{name}': Failed to parse vox data or no models found");
+            Debug.LogWarning($"VoxelDefinition '{name}': Failed to parse vox data or no frames found");
             return;
         }
         

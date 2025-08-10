@@ -4,25 +4,25 @@ using UnityEngine;
 public class VoxData
 {
     public VoxPalette palette;
-    public VoxModel[] models;
+    public VoxModel[] frames;
     
     public VoxData()
     {
         palette = new VoxPalette();
-        models = new VoxModel[0];
+        frames = new VoxModel[0];
     }
     
-    public VoxData(VoxPalette palette, VoxModel[] models)
+    public VoxData(VoxPalette palette, VoxModel[] frames)
     {
         this.palette = palette ?? new VoxPalette();
-        this.models = models ?? new VoxModel[0];
+        this.frames = frames ?? new VoxModel[0];
     }
     
     // Constructor with Color32[] for backward compatibility
-    public VoxData(Color32[] paletteColors, VoxModel[] models)
+    public VoxData(Color32[] paletteColors, VoxModel[] frames)
     {
         this.palette = new VoxPalette(paletteColors);
-        this.models = models ?? new VoxModel[0];
+        this.frames = frames ?? new VoxModel[0];
     }
     
     // Constructor from raw .vox file data - handles parsing only
@@ -31,24 +31,24 @@ public class VoxData
         if (rawVoxData == null || rawVoxData.Length == 0)
         {
             palette = new VoxPalette();
-            models = new VoxModel[0];
+            frames = new VoxModel[0];
             return;
         }
         
         // Parse the raw vox data
-        var (parsedModels, parsedPalette) = VoxTools.ParseVoxData(rawVoxData);
+        var (parsedFrames, parsedPalette) = VoxTools.ParseVoxData(rawVoxData);
         
-        if (parsedModels == null || parsedModels.Length == 0 || parsedPalette == null)
+        if (parsedFrames == null || parsedFrames.Length == 0 || parsedPalette == null)
         {
             // Parsing failed - create empty data
             palette = new VoxPalette();
-            models = new VoxModel[0];
+            frames = new VoxModel[0];
             return;
         }
         
         // Store parsed data only - no mesh generation
         palette = parsedPalette;
-        models = parsedModels;
+        frames = parsedFrames;
     }
     
     // Copy constructor - clones another VoxData
@@ -57,15 +57,15 @@ public class VoxData
         if (other == null)
         {
             palette = new VoxPalette();
-            models = new VoxModel[0];
+            frames = new VoxModel[0];
             return;
         }
         
         // Clone palette
         palette = new VoxPalette(other.palette);
         
-        // Clone models array (shallow copy - VoxModel instances are shared)
-        models = new VoxModel[other.models.Length];
-        System.Array.Copy(other.models, models, other.models.Length);
+        // Clone frames array (shallow copy - VoxModel instances are shared)
+        frames = new VoxModel[other.frames.Length];
+        System.Array.Copy(other.frames, frames, other.frames.Length);
     }
 } 

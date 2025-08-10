@@ -5,10 +5,10 @@ using UnityEngine;
 
 public static class VoxTools
 {
-    public static (VoxModel[] models, VoxPalette palette) ParseVoxData(byte[] rawVoxData)
+    public static (VoxModel[] frames, VoxPalette palette) ParseVoxData(byte[] rawVoxData)
     {
-        // Storage for multiple models
-        var models = new List<VoxModel>();
+        // Storage for multiple frames
+        var frames = new List<VoxModel>();
         var tempPalette = VoxPalette.CreateDefault();
         
         // Current model being parsed
@@ -55,7 +55,7 @@ public static class VoxTools
                             ReadXYZIChunk(reader, currentVoxels, currentSizeX, currentSizeY, currentSizeZ);
                             // Create VoxModel and add to collection
                             var model = new VoxModel(currentSizeX, currentSizeY, currentSizeZ, currentVoxels);
-                            models.Add(model);
+                            frames.Add(model);
                             
                             // Reset for next model
                             currentVoxels = null;
@@ -82,14 +82,14 @@ public static class VoxTools
             }
         }
         
-        // Return array of models
-        if (models.Count > 0)
+        // Return array of frames
+        if (frames.Count > 0)
         {
-            return (models.ToArray(), tempPalette);
+            return (frames.ToArray(), tempPalette);
         }
         else
         {
-            Debug.LogError("No voxel models found in .vox file.");
+            Debug.LogError("No voxel frames found in .vox file.");
             return (new VoxModel[0], tempPalette);
         }
     }
