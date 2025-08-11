@@ -14,8 +14,8 @@ public class VoxelDefinition : MonoBehaviour
     [Tooltip("Strength of normal smoothing (0=hard edges, 1=fully smooth)")]
     public float smoothStrength = 1f;
     [Range(0f, 5f)]
-    [Tooltip("Position tolerance for grouping vertices in voxel units (0=exact match, 0.5=half voxel, etc)")]
-    public float smoothEpsilon = 0f;
+    [Tooltip("Radius in voxel units for grouping nearby vertices for smoothing (0=exact match, 0.5=half voxel radius, etc)")]
+    public float smoothGroupRadius = 0f;
     [Header("Generation Settings")]
     [Tooltip("Scale applied when generating meshes (1.0 = 1 unit per voxel)")]
     public float scale = 1f;
@@ -192,10 +192,10 @@ public class VoxelDefinition : MonoBehaviour
             return null;
         }
         
-        // Cache key (cubic only); include smoothing strength and epsilon (snapped to 0.25)
+        // Cache key (cubic only); include smoothing strength and radius (snapped to 0.25)
         float keyStrength = Mathf.Clamp01(smoothStrength);
-        float keyEpsilon = Mathf.Round(smoothEpsilon * 4f) * 0.25f; // Snap to 0.25 increments
-        var key = (paletteName, frame, scale, keyStrength, keyEpsilon);
+        float keyRadius = Mathf.Round(smoothGroupRadius * 4f) * 0.25f; // Snap to 0.25 increments
+        var key = (paletteName, frame, scale, keyStrength, keyRadius);
         
         // Return cached if available
         if (_meshCache.TryGetValue(key, out var mesh)) 
@@ -216,14 +216,14 @@ public class VoxelDefinition : MonoBehaviour
             // Apply smoothing if strength > 0
             if (mesh != null && keyStrength > 0f)
             {
-                // Convert epsilon from voxel units to mesh units
-                float meshEpsilon = keyEpsilon * effectiveScale;
-                ApplySmoothNormals(mesh, meshEpsilon, keyStrength);
+                // Convert radius from voxel units to mesh units
+                float meshRadius = keyRadius * effectiveScale;
+                ApplySmoothNormals(mesh, meshRadius, keyStrength);
             }
             if (mesh != null)
             {
-                mesh.name = $"VoxelMesh_{voxAsset.name}_{paletteName}_{frame}_Cubic_s{effectiveScale}_sm{keyStrength:0.0}_eps{keyEpsilon:0.0}";
-                var newKey = (paletteName, frame, scale, keyStrength, keyEpsilon);
+                mesh.name = $"VoxelMesh_{voxAsset.name}_{paletteName}_{frame}_Cubic_s{effectiveScale}_sm{keyStrength:0.0}_r{keyRadius:0.00}";
+                var newKey = (paletteName, frame, scale, keyStrength, keyRadius);
                 _meshCache[newKey] = mesh;
             }
         }
