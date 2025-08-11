@@ -291,8 +291,8 @@ public class VoxelMeshSelector : MonoBehaviour
     {
         if (_meshRenderer == null || _meshRenderer.sharedMaterial != null) return;
         
-        // Use proper URP vertex color shader based on Unity documentation
-        Shader voxelShader = Shader.Find("Custom/VoxelURPVertexColor");
+        // Use flat unlit voxel shader by default to keep all sides equally lit
+        Shader voxelShader = Shader.Find("Custom/VoxelURPVertexFlatColor");
         if (voxelShader != null)
         {
             Material material = new Material(voxelShader);
@@ -301,7 +301,16 @@ public class VoxelMeshSelector : MonoBehaviour
         }
         else
         {
-            Debug.LogError($"VoxelMeshSelector: Could not find 'Custom/VoxelURPVertexColor' shader for {gameObject.name}. Make sure the shader file exists.");
+            // Fallback to original lit shader if flat shader is missing
+            Shader litFallback = Shader.Find("Custom/VoxelURPVertexColor");
+            if (litFallback != null)
+            {
+                _meshRenderer.sharedMaterial = new Material(litFallback);
+            }
+            else
+            {
+                Debug.LogError($"VoxelMeshSelector: Could not find voxel shaders for {gameObject.name}. Make sure the shader files exist.");
+            }
         }
     }
 

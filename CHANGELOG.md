@@ -13,6 +13,10 @@
 - Remove smoothing parameter and associated dead code
 - Fix compile errors from refactor and table moves
 
+### New
+- Add `Custom/VoxelURPVertexFlatColor` shader: unlit vertex-color shader so each voxel face is shaded uniformly like a pixel; includes shadow casting via URP Unlit ShadowCaster pass
+- Default material assignment in `VoxelMeshSelector` now prefers the flat shader, falling back to the lit vertex-color shader if unavailable
+
 ## 1.1.1
 ### Stability and URP fixes
 ## 1.2.0
