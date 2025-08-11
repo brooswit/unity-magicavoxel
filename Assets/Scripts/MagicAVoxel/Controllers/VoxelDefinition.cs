@@ -36,12 +36,7 @@ public class VoxelDefinition : MonoBehaviour
     [Header("Smoothing (Normals)")]
     [Tooltip("When enabled, averages vertex normals across shared positions for smoother lighting.")]
     public bool smoothNormals = false;
-    [Range(0f, 1f)]
-    [Tooltip("Blend between original (0) and averaged (1) normals.")]
-    public float smoothNormalsStrength = 1f;
-    [Min(0f)]
-    [Tooltip("World-space tolerance for considering vertices at the same position.")]
-    public float smoothNormalsEpsilon = 0.0001f;
+    // Fixed parameters: epsilon = 0.25, strength = 1 (not configurable)
     // Removed smoothing support
     //=========================================================================
     // Public variables
@@ -219,7 +214,7 @@ public class VoxelDefinition : MonoBehaviour
         
         // Include options in cache key so toggling regenerates meshes
         float mcHash = (meshingMode == MeshingMode.MarchingCubes) ? (mcIsoValue * 10f + mcPadding + (int)mcColorMode * 0.01f) : 0f;
-        float smoothHash = smoothNormals ? (1f + smoothNormalsStrength * 0.1f + Mathf.Clamp(smoothNormalsEpsilon, 0f, 1f) * 0.001f) : 0f;
+        float smoothHash = smoothNormals ? 1f : 0f;
         float optionsHash = mcHash + smoothHash;
         var key = (paletteName, frame, scale, (int)meshingMode, optionsHash);
         
@@ -255,11 +250,11 @@ public class VoxelDefinition : MonoBehaviour
             // Optional smoothing pass on normals
             if (mesh != null && smoothNormals)
             {
-                ApplySmoothNormals(mesh, Mathf.Max(0f, smoothNormalsEpsilon), Mathf.Clamp01(smoothNormalsStrength));
+                ApplySmoothNormals(mesh, 0.25f, 1f);
             }
             if (mesh != null)
             {
-                mesh.name = $"VoxelMesh_{voxAsset.name}_{paletteName}_{frame}_{meshingMode}_s{effectiveScale}_iso{mcIsoValue:0.00}_pad{mcPadding}_cm{mcColorMode}_sm{(smoothNormals?1:0)}_{smoothNormalsStrength:0.00}";
+                mesh.name = $"VoxelMesh_{voxAsset.name}_{paletteName}_{frame}_{meshingMode}_s{effectiveScale}_iso{mcIsoValue:0.00}_pad{mcPadding}_cm{mcColorMode}_sm{(smoothNormals?1:0)}";
                 var newKey = (paletteName, frame, scale, (int)meshingMode, optionsHash);
                 _meshCache[newKey] = mesh;
             }

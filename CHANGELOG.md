@@ -19,7 +19,7 @@
 
 ### Improve
 - Add smooth normals option in `VoxelDefinition`:
-  - `smoothNormals` (bool), `smoothNormalsStrength` (0..1), `smoothNormalsEpsilon`
+  - `smoothNormals` (bool). Uses fixed parameters epsilon=0.25 and strength=1.0
   - Averages normals across coincident vertices for softer lighting in both Cubic and Marching Cubes
   - Included in cache key and mesh name; applied as a post-process after mesh generation
 
