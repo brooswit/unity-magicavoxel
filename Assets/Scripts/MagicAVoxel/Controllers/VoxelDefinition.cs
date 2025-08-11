@@ -32,6 +32,16 @@ public class VoxelDefinition : MonoBehaviour
 
     [Tooltip("How vertex colors are chosen per cube.")]
     public MarchingCubesColorMode mcColorMode = MarchingCubesColorMode.Dominant;
+
+    [Header("Smoothing (Normals)")]
+    [Tooltip("When enabled, averages vertex normals across shared positions for smoother lighting.")]
+    public bool smoothNormals = false;
+    [Range(0f, 1f)]
+    [Tooltip("Blend between original (0) and averaged (1) normals.")]
+    public float smoothNormalsStrength = 1f;
+    [Min(0f)]
+    [Tooltip("World-space tolerance for considering vertices at the same position.")]
+    public float smoothNormalsEpsilon = 0.0001f;
     // Removed smoothing support
     //=========================================================================
     // Public variables
@@ -207,8 +217,10 @@ public class VoxelDefinition : MonoBehaviour
             return null;
         }
         
-        // Include marching cubes options in cache key so toggling sliders regenerates meshes
-        float optionsHash = (meshingMode == MeshingMode.MarchingCubes) ? (mcIsoValue * 10f + mcPadding + (int)mcColorMode * 0.01f) : 0f;
+        // Include options in cache key so toggling regenerates meshes
+        float mcHash = (meshingMode == MeshingMode.MarchingCubes) ? (mcIsoValue * 10f + mcPadding + (int)mcColorMode * 0.01f) : 0f;
+        float smoothHash = smoothNormals ? (1f + smoothNormalsStrength * 0.1f + Mathf.Clamp(smoothNormalsEpsilon, 0f, 1f) * 0.001f) : 0f;
+        float optionsHash = mcHash + smoothHash;
         var key = (paletteName, frame, scale, (int)meshingMode, optionsHash);
         
         // Return cached if available
@@ -240,9 +252,14 @@ public class VoxelDefinition : MonoBehaviour
                 };
                 mesh = MarchingCubes.GenerateMesh(_cachedVoxData.frames[frame], palette, effectiveScale, opts);
             }
+            // Optional smoothing pass on normals
+            if (mesh != null && smoothNormals)
+            {
+                ApplySmoothNormals(mesh, Mathf.Max(0f, smoothNormalsEpsilon), Mathf.Clamp01(smoothNormalsStrength));
+            }
             if (mesh != null)
             {
-                mesh.name = $"VoxelMesh_{voxAsset.name}_{paletteName}_{frame}_{meshingMode}_s{effectiveScale}_iso{mcIsoValue:0.00}_pad{mcPadding}_cm{mcColorMode}";
+                mesh.name = $"VoxelMesh_{voxAsset.name}_{paletteName}_{frame}_{meshingMode}_s{effectiveScale}_iso{mcIsoValue:0.00}_pad{mcPadding}_cm{mcColorMode}_sm{(smoothNormals?1:0)}_{smoothNormalsStrength:0.00}";
                 var newKey = (paletteName, frame, scale, (int)meshingMode, optionsHash);
                 _meshCache[newKey] = mesh;
             }
@@ -366,6 +383,57 @@ public class VoxelDefinition : MonoBehaviour
         }
         _meshCache.Clear();
         _cachedVoxData = null;
+    }
+
+    //=========================================================================
+    // Smoothing Helpers
+    private static void ApplySmoothNormals(Mesh mesh, float epsilon, float strength)
+    {
+        if (mesh == null || mesh.vertexCount == 0) return;
+
+        var vertices = mesh.vertices;
+        var normals = new Vector3[mesh.vertexCount];
+        mesh.RecalculateNormals();
+        mesh.GetNormals(new List<Vector3>(normals));
+        // The above method signature is awkward; use direct GetNormals into a list then copy
+        var normalList = new List<Vector3>(mesh.vertexCount);
+        mesh.GetNormals(normalList);
+        for (int i = 0; i < mesh.vertexCount; i++) normals[i] = normalList[i];
+
+        // Group by position with tolerance
+        var groups = new Dictionary<(int,int,int), List<int>>();
+        float inv = epsilon > 0f ? 1f / epsilon : 1e6f;
+        for (int i = 0; i < vertices.Length; i++)
+        {
+            Vector3 v = vertices[i];
+            int gx = Mathf.RoundToInt(v.x * inv);
+            int gy = Mathf.RoundToInt(v.y * inv);
+            int gz = Mathf.RoundToInt(v.z * inv);
+            var key = (gx, gy, gz);
+            if (!groups.TryGetValue(key, out var list))
+            {
+                list = new List<int>();
+                groups[key] = list;
+            }
+            list.Add(i);
+        }
+
+        // Average within each group
+        var outNormals = new Vector3[normals.Length];
+        foreach (var kv in groups)
+        {
+            var list = kv.Value;
+            Vector3 avg = Vector3.zero;
+            for (int i = 0; i < list.Count; i++) avg += normals[list[i]];
+            if (avg.sqrMagnitude > 1e-12f) avg.Normalize();
+            for (int i = 0; i < list.Count; i++)
+            {
+                int idx = list[i];
+                outNormals[idx] = Vector3.Slerp(normals[idx], avg, strength);
+            }
+        }
+
+        mesh.SetNormals(new List<Vector3>(outNormals));
     }
 }
 

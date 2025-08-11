@@ -17,6 +17,12 @@
 - Remove experimental shaders `Custom/VoxelURPVertexFlatColor` and `Custom/VoxelURPFlatLitPerVoxel`
 - Restore default material selection to `Custom/VoxelURPVertexColor` in `VoxelMeshSelector`
 
+### Improve
+- Add smooth normals option in `VoxelDefinition`:
+  - `smoothNormals` (bool), `smoothNormalsStrength` (0..1), `smoothNormalsEpsilon`
+  - Averages normals across coincident vertices for softer lighting in both Cubic and Marching Cubes
+  - Included in cache key and mesh name; applied as a post-process after mesh generation
+
 ## 1.1.1
 ### Stability and URP fixes
 ## 1.2.0
