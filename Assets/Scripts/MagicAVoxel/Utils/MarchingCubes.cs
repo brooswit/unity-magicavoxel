@@ -1,39 +1,13 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum MarchingCubesColorMode
-{
-    Dominant = 0,
-    FirstSolid = 1
-}
-
-public struct MarchingCubesOptions
-{
-    public float isoValue;           // 0..1
-    public int padding;              // cells of empty padding around volume
-    public MarchingCubesColorMode colorMode;
-
-    public static MarchingCubesOptions Default => new MarchingCubesOptions
-    {
-        isoValue = 0.25f,
-        padding = 1,
-        colorMode = MarchingCubesColorMode.Dominant
-    };
-}
-
 public static class MarchingCubes
 {
     
 
     // Corner offsets moved to tables
 
-    // Back-compat overload with defaults
     public static Mesh GenerateMesh(VoxFrame voxFrame, VoxPalette palette, float scale)
-    {
-        return GenerateMesh(voxFrame, palette, scale, MarchingCubesOptions.Default);
-    }
-
-    public static Mesh GenerateMesh(VoxFrame voxFrame, VoxPalette palette, float scale, MarchingCubesOptions options)
     {
         var mesh = new Mesh { indexFormat = UnityEngine.Rendering.IndexFormat.UInt32 };
         if (voxFrame == null || palette == null)
@@ -44,7 +18,7 @@ public static class MarchingCubes
         int sizeZ = voxFrame.sizeZ;
 
         // Build scalar field at lattice points with configurable empty padding around the volume
-        int pad = Mathf.Max(0, options.padding);
+        int pad = 1;
         int gx = sizeX + 1 + pad * 2;
         int gy = sizeY + 1 + pad * 2;
         int gz = sizeZ + 1 + pad * 2;
@@ -102,7 +76,7 @@ public static class MarchingCubes
         List<int> triangles = new List<int>();
         List<Color32> colors = new List<Color32>();
 
-        float iso = Mathf.Clamp01(options.isoValue);
+        float iso = 0.25f;
 
         // Center pivot consistent with VoxTools (pos = (x, z, -y))
         Vector3 center = new Vector3(sizeX / 2f, sizeZ / 2f, -sizeY / 2f);
@@ -146,37 +120,24 @@ public static class MarchingCubes
                     Color32[] edgeColor = new Color32[12];
                     bool[] edgeReady = new bool[12];
 
-                    // Determine a color for this cube from its 8 buffered cells
+                    // Determine dominant color among non-zero samples
                     byte selectedColorIndex = 0;
-                    if (options.colorMode == MarchingCubesColorMode.FirstSolid)
+                    Dictionary<byte, int> counts = new Dictionary<byte, int>();
+                    for (int ci = 0; ci < 8; ci++)
                     {
-                        for (int ci = 0; ci < 8; ci++)
-                        {
-                            var co = MarchingCubesTables.CornerOffsets[ci];
-                            byte cidx = GetBufferedCell(x + (int)co.x, y + (int)co.y, z + (int)co.z);
-                            if (cidx != 0) { selectedColorIndex = cidx; break; }
-                        }
+                        var co = MarchingCubesTables.CornerOffsets[ci];
+                        byte cidx = GetBufferedCell(x + (int)co.x, y + (int)co.y, z + (int)co.z);
+                        if (cidx == 0) continue;
+                        if (!counts.ContainsKey(cidx)) counts[cidx] = 0;
+                        counts[cidx]++;
                     }
-                    else
+                    int best = 0;
+                    foreach (var kv in counts)
                     {
-                        // Dominant color among non-zero samples
-                        Dictionary<byte, int> counts = new Dictionary<byte, int>();
-                        for (int ci = 0; ci < 8; ci++)
+                        if (kv.Value > best)
                         {
-                            var co = MarchingCubesTables.CornerOffsets[ci];
-                            byte cidx = GetBufferedCell(x + (int)co.x, y + (int)co.y, z + (int)co.z);
-                            if (cidx == 0) continue;
-                            if (!counts.ContainsKey(cidx)) counts[cidx] = 0;
-                            counts[cidx]++;
-                        }
-                        int best = 0;
-                        foreach (var kv in counts)
-                        {
-                            if (kv.Value > best)
-                            {
-                                best = kv.Value;
-                                selectedColorIndex = kv.Key;
-                            }
+                            best = kv.Value;
+                            selectedColorIndex = kv.Key;
                         }
                     }
 

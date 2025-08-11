@@ -9,35 +9,10 @@ using System;
 [ExecuteInEditMode]
 public class VoxelDefinition : MonoBehaviour
 {
-    public enum MeshingMode
-    {
-        Cubic = 0,
-        MarchingCubes = 1
-    }
-
     [Header("Generation Settings")]
     [Tooltip("Scale applied when generating meshes (1.0 = 1 unit per voxel)")]
     public float scale = 1f;
-    [Tooltip("Meshing algorithm used to generate the surface")] 
-    public MeshingMode meshingMode = MeshingMode.Cubic;
 
-    [Header("Marching Cubes Settings")]
-    [Range(0f, 1f)]
-    [Tooltip("Isovalue threshold for surface extraction (0..1). Lower pulls the surface outward.")]
-    public float mcIsoValue = 0.25f;
-
-    [Min(0)]
-    [Tooltip("Padding cells of empty space around the volume to ensure boundary faces generate.")]
-    public int mcPadding = 1;
-
-    [Tooltip("How vertex colors are chosen per cube.")]
-    public MarchingCubesColorMode mcColorMode = MarchingCubesColorMode.Dominant;
-
-    [Header("Smoothing (Normals)")]
-    [Tooltip("When enabled, averages vertex normals across shared positions for smoother lighting.")]
-    public bool smoothNormals = false;
-    // Fixed parameters: epsilon = 0.25, strength = 1 (not configurable)
-    // Removed smoothing support
     //=========================================================================
     // Public variables
 
@@ -52,16 +27,14 @@ public class VoxelDefinition : MonoBehaviour
     //=========================================================================
     // Internal variables
 
-    // Internal cache for mesh data per palette, frame, scale, meshing mode, and smoothness
-    // Key: (paletteName, frameIndex, scale, mode, smoothness), Value: Mesh
-    private Dictionary<(string, int, float, int, float), Mesh> _meshCache = new Dictionary<(string, int, float, int, float), Mesh>();
+    // Internal cache for mesh data per palette, frame, and scale
+    // Key: (paletteName, frameIndex, scale), Value: Mesh
+    private Dictionary<(string, int, float), Mesh> _meshCache = new Dictionary<(string, int, float), Mesh>();
     
     // Palettes are sourced from default data and serialized extraPalettes
     
     // Cache for parsed vox data
     private VoxData _cachedVoxData;
-    
-    // Custom palettes are no longer supported; use RegisterPalette(Texture2D)
     
     // Event fired when cache is reinitialized (for dependent components)
     public System.Action OnCacheReinitialized;
@@ -151,7 +124,7 @@ public class VoxelDefinition : MonoBehaviour
     {
         if (string.IsNullOrEmpty(paletteName)) return;
         
-        var keysToRemove = new List<(string, int, float, int, float)>();
+        var keysToRemove = new List<(string, int, float)>();
         
         foreach (var key in _meshCache.Keys)
         {
@@ -212,11 +185,8 @@ public class VoxelDefinition : MonoBehaviour
             return null;
         }
         
-        // Include options in cache key so toggling regenerates meshes
-        float mcHash = (meshingMode == MeshingMode.MarchingCubes) ? (mcIsoValue * 10f + mcPadding + (int)mcColorMode * 0.01f) : 0f;
-        float smoothHash = smoothNormals ? 1f : 0f;
-        float optionsHash = mcHash + smoothHash;
-        var key = (paletteName, frame, scale, (int)meshingMode, optionsHash);
+        // Cache key (cubic only; smoothing always on)
+        var key = (paletteName, frame, scale);
         
         // Return cached if available
         if (_meshCache.TryGetValue(key, out var mesh)) 
@@ -233,29 +203,16 @@ public class VoxelDefinition : MonoBehaviour
         try
         {
             float effectiveScale = Mathf.Max(0.0001f, scale);
-            if (meshingMode == MeshingMode.Cubic)
-            {
-                mesh = VoxTools.GenerateMesh(_cachedVoxData.frames[frame], palette, effectiveScale);
-            }
-            else
-            {
-                var opts = new MarchingCubesOptions
-                {
-                    isoValue = Mathf.Clamp01(mcIsoValue),
-                    padding = Mathf.Max(0, mcPadding),
-                    colorMode = mcColorMode
-                };
-                mesh = MarchingCubes.GenerateMesh(_cachedVoxData.frames[frame], palette, effectiveScale, opts);
-            }
-            // Optional smoothing pass on normals
-            if (mesh != null && smoothNormals)
+            mesh = VoxTools.GenerateMesh(_cachedVoxData.frames[frame], palette, effectiveScale);
+            // Always smooth normals
+            if (mesh != null)
             {
                 ApplySmoothNormals(mesh, 0.25f, 1f);
             }
             if (mesh != null)
             {
-                mesh.name = $"VoxelMesh_{voxAsset.name}_{paletteName}_{frame}_{meshingMode}_s{effectiveScale}_iso{mcIsoValue:0.00}_pad{mcPadding}_cm{mcColorMode}_sm{(smoothNormals?1:0)}";
-                var newKey = (paletteName, frame, scale, (int)meshingMode, optionsHash);
+                mesh.name = $"VoxelMesh_{voxAsset.name}_{paletteName}_{frame}_Cubic_s{effectiveScale}_sm1";
+                var newKey = (paletteName, frame, scale);
                 _meshCache[newKey] = mesh;
             }
         }

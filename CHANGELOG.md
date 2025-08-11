@@ -13,9 +13,13 @@
 - Remove smoothing parameter and associated dead code
 - Fix compile errors from refactor and table moves
 
-### Revert
+### Revert / Simplify
 - Remove experimental shaders `Custom/VoxelURPVertexFlatColor` and `Custom/VoxelURPFlatLitPerVoxel`
 - Restore default material selection to `Custom/VoxelURPVertexColor` in `VoxelMeshSelector`
+- Deprecate Marching Cubes path in `VoxelDefinition`; generation is always Cubic with smooth normals
+
+### Cleanup
+- Simplify mesh cache to `(paletteName, frameIndex, scale)` since mode and smoothing are now static
 
 ### Improve
 - Add smooth normals option in `VoxelDefinition`:
