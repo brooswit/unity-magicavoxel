@@ -35,11 +35,11 @@ public class VoxelDefinitionEditor : Editor
             }
             if (_smoothEpsilonProp != null)
             {
-                EditorGUILayout.PropertyField(_smoothEpsilonProp, new GUIContent("Smooth Epsilon"));
+                _smoothEpsilonProp.floatValue = EditorGUILayout.Slider("Smooth Epsilon", _smoothEpsilonProp.floatValue, 0f, 1f);
             }
             if (_smoothStrengthProp != null)
             {
-                EditorGUILayout.PropertyField(_smoothStrengthProp, new GUIContent("Smooth Strength"));
+                _smoothStrengthProp.floatValue = EditorGUILayout.Slider("Smooth Strength", _smoothStrengthProp.floatValue, 0f, 1f);
             }
             EditorGUI.indentLevel--;
         }
