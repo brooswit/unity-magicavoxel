@@ -91,25 +91,16 @@ Shader "Custom/VoxelURPFlatLitPerVoxel"
                 // Ambient term
                 float3 lighting = color * _Ambient;
 
-                // Main light (URP helper provides shadow attenuation internally)
-                Light mainLight = GetMainLight();
+                // Main directional light evaluated at voxel center
+                Light mainLight = GetMainLight(IN.voxelCenterWS);
                 lighting += EvaluateLightUniform(mainLight) * color;
 
                 // Additional lights
                 #if defined(_ADDITIONAL_LIGHTS)
-                // Forward+ directional loop (if enabled)
-                #if defined(_CLUSTER_LIGHT_LOOP)
-                UNITY_LOOP for (uint li = 0; li < min(URP_FP_DIRECTIONAL_LIGHTS_COUNT, MAX_VISIBLE_LIGHTS); li++)
-                {
-                    Light addDir = GetAdditionalLight(li, IN.voxelCenterWS, half4(1,1,1,1));
-                    lighting += EvaluateLightUniform(addDir) * color;
-                }
-                #endif
-
-                // Point/spot lights
+                // All additional lights (point/spot and any others) at voxel center
                 uint pixelLightCount = GetAdditionalLightsCount();
                 LIGHT_LOOP_BEGIN(pixelLightCount)
-                    Light add = GetAdditionalLight(lightIndex, IN.voxelCenterWS, half4(1,1,1,1));
+                    Light add = GetAdditionalLight(lightIndex, IN.voxelCenterWS);
                     lighting += EvaluateLightUniform(add) * color;
                 LIGHT_LOOP_END
                 #endif
