@@ -5,19 +5,16 @@ using UnityEngine;
 public class VoxelDefinitionEditor : Editor
 {
     private SerializedProperty _smoothProp;
-    private SerializedProperty _smoothEpsilonProp;
     private SerializedProperty _smoothStrengthProp;
 
     private static bool _showAdvanced = false;
     
-    // Snap increment for sliders to reduce stress/jitter
-    private const float EPSILON_SNAP = 0.01f;
+    // Snap increment for strength slider to reduce stress/jitter
     private const float STRENGTH_SNAP = 0.1f;
 
     private void OnEnable()
     {
         _smoothProp = serializedObject.FindProperty("smooth");
-        _smoothEpsilonProp = serializedObject.FindProperty("smoothEpsilon");
         _smoothStrengthProp = serializedObject.FindProperty("smoothStrength");
     }
 
@@ -36,11 +33,6 @@ public class VoxelDefinitionEditor : Editor
             if (_smoothProp != null)
             {
                 EditorGUILayout.PropertyField(_smoothProp, new GUIContent("Smooth"));
-            }
-            if (_smoothEpsilonProp != null)
-            {
-                float rawValue = EditorGUILayout.Slider("Smooth Epsilon", _smoothEpsilonProp.floatValue, 0f, 1f);
-                _smoothEpsilonProp.floatValue = Mathf.Round(rawValue / EPSILON_SNAP) * EPSILON_SNAP;
             }
             if (_smoothStrengthProp != null)
             {
