@@ -20,9 +20,19 @@ public class VoxelDefinition : MonoBehaviour
     public float scale = 1f;
     [Tooltip("Meshing algorithm used to generate the surface")] 
     public MeshingMode meshingMode = MeshingMode.Cubic;
+
+    [Header("Marching Cubes Settings")]
     [Range(0f, 1f)]
-    [Tooltip("Smoothing strength for Marching Cubes (0 = none, 1 = strong blur)")]
-    public float smoothness = 0.2f;
+    [Tooltip("Isovalue threshold for surface extraction (0..1). Lower pulls the surface outward.")]
+    public float mcIsoValue = 0.25f;
+
+    [Min(0)]
+    [Tooltip("Padding cells of empty space around the volume to ensure boundary faces generate.")]
+    public int mcPadding = 1;
+
+    [Tooltip("How vertex colors are chosen per cube.")]
+    public MarchingCubesColorMode mcColorMode = MarchingCubesColorMode.Dominant;
+    // Removed smoothing support
     //=========================================================================
     // Public variables
 
@@ -197,7 +207,9 @@ public class VoxelDefinition : MonoBehaviour
             return null;
         }
         
-        var key = (paletteName, frame, scale, (int)meshingMode, Mathf.Round(smoothness * 1000f) / 1000f);
+        // Include marching cubes options in cache key so toggling sliders regenerates meshes
+        float optionsHash = (meshingMode == MeshingMode.MarchingCubes) ? (mcIsoValue * 10f + mcPadding + (int)mcColorMode * 0.01f) : 0f;
+        var key = (paletteName, frame, scale, (int)meshingMode, optionsHash);
         
         // Return cached if available
         if (_meshCache.TryGetValue(key, out var mesh)) 
@@ -220,13 +232,19 @@ public class VoxelDefinition : MonoBehaviour
             }
             else
             {
-                float clampedSmoothness = Mathf.Clamp01(smoothness);
-                mesh = MarchingCubes.GenerateMesh(_cachedVoxData.frames[frame], palette, effectiveScale, clampedSmoothness);
+                var opts = new MarchingCubesOptions
+                {
+                    isoValue = Mathf.Clamp01(mcIsoValue),
+                    padding = Mathf.Max(0, mcPadding),
+                    colorMode = mcColorMode
+                };
+                mesh = MarchingCubes.GenerateMesh(_cachedVoxData.frames[frame], palette, effectiveScale, opts);
             }
             if (mesh != null)
             {
-                mesh.name = $"VoxelMesh_{voxAsset.name}_{paletteName}_{frame}_{meshingMode}_s{effectiveScale}_sm{smoothness:0.00}";
-                _meshCache[key] = mesh;
+                mesh.name = $"VoxelMesh_{voxAsset.name}_{paletteName}_{frame}_{meshingMode}_s{effectiveScale}_iso{mcIsoValue:0.00}_pad{mcPadding}_cm{mcColorMode}";
+                var newKey = (paletteName, frame, scale, (int)meshingMode, optionsHash);
+                _meshCache[newKey] = mesh;
             }
         }
         catch (System.Exception ex)

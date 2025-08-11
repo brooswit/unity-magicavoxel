@@ -1,4 +1,18 @@
 # CHANGELOG
+## 1.3.0
+### Marching Cubes fixes, refactor, and inspector options
+- Move lookup tables (`EdgeTable`, `TriTable`, `EdgeIndexPairs`, `CornerOffsets`) to `Assets/Scripts/MagicAVoxel/Utils/MarchingCubesTables.cs` to prevent accidental edits
+- Fix boundary face generation by marching over a padded grid and keeping density padding empty while color padding inherits nearest in-bounds palette indices
+- Correct corner ordering, cube index rule, and coordinate transforms to match Paul Bourke convention
+- Implement consistent color selection at boundaries using clamped sampling; add selectable color mode
+- Add inspector sliders/controls on `VoxelDefinition`:
+  - `mcIsoValue` (0..1)
+  - `mcPadding` (>=0)
+  - `mcColorMode` (Dominant, FirstSolid)
+- Extend mesh cache key to include Marching Cubes options; meshes regenerate on slider changes
+- Remove smoothing parameter and associated dead code
+- Fix compile errors from refactor and table moves
+
 ## 1.1.1
 ### Stability and URP fixes
 ## 1.2.0
