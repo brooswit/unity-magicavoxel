@@ -91,8 +91,8 @@ Shader "Custom/VoxelURPFlatLitPerVoxel"
                 // Ambient term
                 float3 lighting = color * _Ambient;
 
-                // Main directional light evaluated at voxel center
-                Light mainLight = GetMainLight(IN.voxelCenterWS);
+                // Main directional light (directional, not position dependent)
+                Light mainLight = GetMainLight();
                 lighting += EvaluateLightUniform(mainLight) * color;
 
                 // Additional lights
