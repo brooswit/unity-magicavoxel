@@ -11,7 +11,7 @@ public class VoxelDefinition : MonoBehaviour
 {
     // Advanced options foldout values (serialized, shown via custom inspector)
     [HideInInspector] public bool smooth = true;
-    [HideInInspector] public float smoothEpsilon = 0.25f;
+    [HideInInspector] public float smoothEpsilon = 0f;
     [HideInInspector] public float smoothStrength = 1f;
     [Header("Generation Settings")]
     [Tooltip("Scale applied when generating meshes (1.0 = 1 unit per voxel)")]
@@ -31,9 +31,9 @@ public class VoxelDefinition : MonoBehaviour
     //=========================================================================
     // Internal variables
 
-    // Internal cache for mesh data per palette, frame, and scale
-    // Key: (paletteName, frameIndex, scale), Value: Mesh
-    private Dictionary<(string, int, float), Mesh> _meshCache = new Dictionary<(string, int, float), Mesh>();
+    // Internal cache for mesh data per palette, frame, scale, smoothing strength and epsilon
+    // Key: (paletteName, frameIndex, scale, smoothStrength, smoothEpsilon), Value: Mesh
+    private Dictionary<(string, int, float, float, float), Mesh> _meshCache = new Dictionary<(string, int, float, float, float), Mesh>();
     
     // Palettes are sourced from default data and serialized extraPalettes
     
@@ -128,7 +128,7 @@ public class VoxelDefinition : MonoBehaviour
     {
         if (string.IsNullOrEmpty(paletteName)) return;
         
-        var keysToRemove = new List<(string, int, float)>();
+        var keysToRemove = new List<(string, int, float, float, float)>();
         
         foreach (var key in _meshCache.Keys)
         {
@@ -189,8 +189,10 @@ public class VoxelDefinition : MonoBehaviour
             return null;
         }
         
-        // Cache key (cubic only; smoothing always on)
-        var key = (paletteName, frame, scale);
+        // Cache key (cubic only); include smoothing params. If smoothing disabled, strength=0 in key
+        float keyStrength = smooth ? Mathf.Clamp01(smoothStrength) : 0f;
+        float keyEpsilon = Mathf.Max(0f, smoothEpsilon);
+        var key = (paletteName, frame, scale, keyStrength, keyEpsilon);
         
         // Return cached if available
         if (_meshCache.TryGetValue(key, out var mesh)) 
@@ -208,15 +210,15 @@ public class VoxelDefinition : MonoBehaviour
         {
             float effectiveScale = Mathf.Max(0.0001f, scale);
             mesh = VoxTools.GenerateMesh(_cachedVoxData.frames[frame], palette, effectiveScale);
-            // Always smooth normals
-            if (mesh != null)
+            // Apply smoothing if enabled and strength > 0
+            if (mesh != null && smooth && keyStrength > 0f)
             {
-                ApplySmoothNormals(mesh, 0.25f, 1f);
+                ApplySmoothNormals(mesh, keyEpsilon, keyStrength);
             }
             if (mesh != null)
             {
-                mesh.name = $"VoxelMesh_{voxAsset.name}_{paletteName}_{frame}_Cubic_s{effectiveScale}_sm1";
-                var newKey = (paletteName, frame, scale);
+                mesh.name = $"VoxelMesh_{voxAsset.name}_{paletteName}_{frame}_Cubic_s{effectiveScale}_sm{keyStrength:0.00}_eps{keyEpsilon:0.###}";
+                var newKey = (paletteName, frame, scale, keyStrength, keyEpsilon);
                 _meshCache[newKey] = mesh;
             }
         }

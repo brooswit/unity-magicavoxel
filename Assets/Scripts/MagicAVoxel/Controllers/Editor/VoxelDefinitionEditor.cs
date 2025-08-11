@@ -11,7 +11,8 @@ public class VoxelDefinitionEditor : Editor
     private static bool _showAdvanced = false;
     
     // Snap increment for sliders to reduce stress/jitter
-    private const float SLIDER_SNAP = 0.01f;
+    private const float EPSILON_SNAP = 0.01f;
+    private const float STRENGTH_SNAP = 0.1f;
 
     private void OnEnable()
     {
@@ -39,12 +40,12 @@ public class VoxelDefinitionEditor : Editor
             if (_smoothEpsilonProp != null)
             {
                 float rawValue = EditorGUILayout.Slider("Smooth Epsilon", _smoothEpsilonProp.floatValue, 0f, 1f);
-                _smoothEpsilonProp.floatValue = Mathf.Round(rawValue / SLIDER_SNAP) * SLIDER_SNAP;
+                _smoothEpsilonProp.floatValue = Mathf.Round(rawValue / EPSILON_SNAP) * EPSILON_SNAP;
             }
             if (_smoothStrengthProp != null)
             {
                 float rawValue = EditorGUILayout.Slider("Smooth Strength", _smoothStrengthProp.floatValue, 0f, 1f);
-                _smoothStrengthProp.floatValue = Mathf.Round(rawValue / SLIDER_SNAP) * SLIDER_SNAP;
+                _smoothStrengthProp.floatValue = Mathf.Round(rawValue / STRENGTH_SNAP) * STRENGTH_SNAP;
             }
             EditorGUI.indentLevel--;
         }
