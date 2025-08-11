@@ -4,7 +4,7 @@ using UnityEditor;
 [CustomEditor(typeof(VoxelDefinition))]
 public class VoxelDefinitionEditor : Editor
 {
-    private const float RADIUS_SNAP = 0.25f;
+    private const float RADIUS_SNAP = 1f;
     private const float STRENGTH_SNAP = 0.1f;
     
     public override void OnInspectorGUI()
@@ -62,7 +62,7 @@ public class VoxelDefinitionEditor : Editor
                 float displayValue = Mathf.Round(voxelDef.smoothGroupRadius / RADIUS_SNAP) * RADIUS_SNAP;
                 float newValue = EditorGUILayout.Slider(
                     new GUIContent("Normal Blur Radius (voxels)", "Radius in voxel units for blurring/averaging normals across nearby voxels (0=exact match, 0.5=half voxel radius, etc)"),
-                    displayValue, 1f, 16f);
+                    displayValue, 1f, 5f);
                 
                 if (EditorGUI.EndChangeCheck())
                 {
