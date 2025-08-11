@@ -38,6 +38,10 @@ public class VoxelDefinitionEditor : Editor
                     Undo.RecordObject(voxelDef, "Change Smooth Strength");
                     voxelDef.smoothStrength = snappedValue;
                     EditorUtility.SetDirty(voxelDef);
+                    // Force Scene view repaint to reflect normal changes immediately in edit mode
+                    #if UNITY_EDITOR
+                    UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+                    #endif
                 }
             }
             else if (prop.name == "smoothGroupRadius")
@@ -57,6 +61,9 @@ public class VoxelDefinitionEditor : Editor
                     Undo.RecordObject(voxelDef, "Change Smooth Group Radius");
                     voxelDef.smoothGroupRadius = snappedValue;
                     EditorUtility.SetDirty(voxelDef);
+                    #if UNITY_EDITOR
+                    UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+                    #endif
                 }
             }
             else

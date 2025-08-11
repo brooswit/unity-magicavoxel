@@ -68,6 +68,9 @@ public class VoxelDefinition : MonoBehaviour
         // Clear cache when asset or palettes change
         ClearAllCaches();
         InitializeCache();
+
+        // Ensure listeners refresh even if initialization short-circuits
+        OnCacheReinitialized?.Invoke();
     }
     
     void OnDestroy()
