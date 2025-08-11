@@ -13,7 +13,7 @@ public class VoxelDefinition : MonoBehaviour
     [Range(0f, 1f)]
     [Tooltip("Strength of normal smoothing (0=hard edges, 1=fully smooth)")]
     public float smoothStrength = 1f;
-    [Range(1f, 5f)]
+    [Range(1f, 16f)]
     [Tooltip("Radius in voxel units for blurring/averaging normals across nearby voxels (0=exact match, 0.5=half voxel radius, etc)")]
     public float smoothGroupRadius = 0f;
     [Header("Generation Settings")]
@@ -63,7 +63,7 @@ public class VoxelDefinition : MonoBehaviour
     {
         // Snap values to their respective increments
         smoothStrength = Mathf.Round(smoothStrength * 10f) * 0.1f;
-        smoothGroupRadius = Mathf.Clamp(Mathf.Round(smoothGroupRadius * 4f) * 0.25f, 1f, 5f);
+        smoothGroupRadius = Mathf.Clamp(Mathf.Round(smoothGroupRadius * 4f) * 0.25f, 1f, 16f);
         
         // Clear cache when asset or palettes change
         ClearAllCaches();
@@ -219,7 +219,7 @@ public class VoxelDefinition : MonoBehaviour
         
         // Cache key (cubic only); include smoothing strength and radius (snapped)
         float keyStrength = Mathf.Round(Mathf.Clamp01(smoothStrength) * 10f) * 0.1f; // Snap to 0.1 increments
-        float keyRadius = Mathf.Clamp(Mathf.Round(smoothGroupRadius * 4f) * 0.25f, 1f, 5f); // Snap to 0.25 increments, min 1
+        float keyRadius = Mathf.Clamp(Mathf.Round(smoothGroupRadius * 4f) * 0.25f, 1f, 16f); // Snap to 0.25 increments, clamp 1..16
         var key = (paletteName, frame, scale, keyStrength, keyRadius);
         
         // Return cached if available
