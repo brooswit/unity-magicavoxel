@@ -62,7 +62,7 @@ public class VoxelDefinitionEditor : Editor
                 float displayValue = Mathf.Round(voxelDef.smoothGroupRadius / RADIUS_SNAP) * RADIUS_SNAP;
                 float newValue = EditorGUILayout.Slider(
                     new GUIContent("Normal Blur Radius (voxels)", "Radius in voxel units for blurring/averaging normals across nearby voxels (0=exact match, 0.5=half voxel radius, etc)"),
-                    displayValue, 0f, 5f);
+                    displayValue, 1f, 5f);
                 
                 if (EditorGUI.EndChangeCheck())
                 {
