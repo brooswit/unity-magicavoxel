@@ -13,8 +13,8 @@ public class VoxelDefinition : MonoBehaviour
     [Range(0f, 1f)]
     [Tooltip("Strength of normal smoothing (0=hard edges, 1=fully smooth)")]
     public float smoothStrength = 1f;
-    [Range(0f, 1f)]
-    [Tooltip("Position tolerance for grouping vertices (0=exact match, higher=more grouping)")]
+    [Range(0f, 5f)]
+    [Tooltip("Position tolerance for grouping vertices in voxel units (0=exact match, 0.5=half voxel, etc)")]
     public float smoothEpsilon = 0f;
     [Header("Generation Settings")]
     [Tooltip("Scale applied when generating meshes (1.0 = 1 unit per voxel)")]
@@ -192,9 +192,9 @@ public class VoxelDefinition : MonoBehaviour
             return null;
         }
         
-        // Cache key (cubic only); include smoothing strength and epsilon
+        // Cache key (cubic only); include smoothing strength and epsilon (snapped to 0.5)
         float keyStrength = Mathf.Clamp01(smoothStrength);
-        float keyEpsilon = Mathf.Clamp01(smoothEpsilon);
+        float keyEpsilon = Mathf.Round(smoothEpsilon * 2f) * 0.5f; // Snap to 0.5 increments
         var key = (paletteName, frame, scale, keyStrength, keyEpsilon);
         
         // Return cached if available
@@ -216,7 +216,9 @@ public class VoxelDefinition : MonoBehaviour
             // Apply smoothing if strength > 0
             if (mesh != null && keyStrength > 0f)
             {
-                ApplySmoothNormals(mesh, keyEpsilon, keyStrength);
+                // Convert epsilon from voxel units to mesh units
+                float meshEpsilon = keyEpsilon * effectiveScale;
+                ApplySmoothNormals(mesh, meshEpsilon, keyStrength);
             }
             if (mesh != null)
             {
