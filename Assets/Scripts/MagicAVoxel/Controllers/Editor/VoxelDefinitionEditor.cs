@@ -5,6 +5,7 @@ using UnityEditor;
 public class VoxelDefinitionEditor : Editor
 {
     private const float RADIUS_SNAP = 0.25f;
+    private const float STRENGTH_SNAP = 0.1f;
     
     public override void OnInspectorGUI()
     {
@@ -20,7 +21,24 @@ public class VoxelDefinitionEditor : Editor
             enterChildren = false;
             if (prop.name == "m_Script") continue;
             
-            if (prop.name == "smoothGroupRadius")
+            if (prop.name == "smoothStrength")
+            {
+                // Custom slider with snapping for smoothStrength
+                EditorGUI.BeginChangeCheck();
+                float newValue = EditorGUILayout.Slider(
+                    new GUIContent("Smooth Strength", "Strength of normal smoothing (0=hard edges, 1=fully smooth)"),
+                    voxelDef.smoothStrength, 0f, 1f);
+                
+                if (EditorGUI.EndChangeCheck())
+                {
+                    // Snap to nearest 0.1
+                    float snappedValue = Mathf.Round(newValue / STRENGTH_SNAP) * STRENGTH_SNAP;
+                    Undo.RecordObject(voxelDef, "Change Smooth Strength");
+                    voxelDef.smoothStrength = snappedValue;
+                    EditorUtility.SetDirty(voxelDef);
+                }
+            }
+            else if (prop.name == "smoothGroupRadius")
             {
                 // Custom slider with snapping for smoothGroupRadius
                 EditorGUI.BeginChangeCheck();

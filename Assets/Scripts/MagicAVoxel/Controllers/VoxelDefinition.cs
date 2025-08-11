@@ -192,8 +192,8 @@ public class VoxelDefinition : MonoBehaviour
             return null;
         }
         
-        // Cache key (cubic only); include smoothing strength and radius (snapped to 0.25)
-        float keyStrength = Mathf.Clamp01(smoothStrength);
+        // Cache key (cubic only); include smoothing strength and radius (snapped)
+        float keyStrength = Mathf.Round(Mathf.Clamp01(smoothStrength) * 10f) * 0.1f; // Snap to 0.1 increments
         float keyRadius = Mathf.Round(smoothGroupRadius * 4f) * 0.25f; // Snap to 0.25 increments
         var key = (paletteName, frame, scale, keyStrength, keyRadius);
         
