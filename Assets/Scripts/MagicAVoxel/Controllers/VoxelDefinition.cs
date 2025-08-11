@@ -355,52 +355,82 @@ public class VoxelDefinition : MonoBehaviour
 
     //=========================================================================
     // Smoothing Helpers
-    private static void ApplySmoothNormals(Mesh mesh, float epsilon, float strength)
+    private static void ApplySmoothNormals(Mesh mesh, float radius, float strength)
     {
         if (mesh == null || mesh.vertexCount == 0) return;
+        if (radius <= 0f || strength <= 0f)
+        {
+            // Nothing to do, but ensure normals exist
+            mesh.RecalculateNormals();
+            return;
+        }
 
-        var vertices = mesh.vertices;
-        var normals = new Vector3[mesh.vertexCount];
+        // Read positions and base normals
+        Vector3[] vertices = mesh.vertices;
+        var baseNormalList = new List<Vector3>(mesh.vertexCount);
         mesh.RecalculateNormals();
-        mesh.GetNormals(new List<Vector3>(normals));
-        // The above method signature is awkward; use direct GetNormals into a list then copy
-        var normalList = new List<Vector3>(mesh.vertexCount);
-        mesh.GetNormals(normalList);
-        for (int i = 0; i < mesh.vertexCount; i++) normals[i] = normalList[i];
+        mesh.GetNormals(baseNormalList);
+        Vector3[] baseNormals = baseNormalList.ToArray();
 
-        // Group by position with tolerance
-        var groups = new Dictionary<(int,int,int), List<int>>();
-        float inv = epsilon > 0f ? 1f / epsilon : 1e6f;
-        for (int i = 0; i < vertices.Length; i++)
+        int vertexCount = vertices.Length;
+
+        // Spatial hash grid to accelerate neighborhood lookup
+        float cellSize = Mathf.Max(1e-6f, radius);
+        float invCell = 1f / cellSize;
+        var grid = new Dictionary<(int,int,int), List<int>>();
+        for (int i = 0; i < vertexCount; i++)
         {
             Vector3 v = vertices[i];
-            int gx = Mathf.RoundToInt(v.x * inv);
-            int gy = Mathf.RoundToInt(v.y * inv);
-            int gz = Mathf.RoundToInt(v.z * inv);
-            var key = (gx, gy, gz);
-            if (!groups.TryGetValue(key, out var list))
+            int cx = Mathf.FloorToInt(v.x * invCell);
+            int cy = Mathf.FloorToInt(v.y * invCell);
+            int cz = Mathf.FloorToInt(v.z * invCell);
+            var key = (cx, cy, cz);
+            if (!grid.TryGetValue(key, out var list))
             {
-                list = new List<int>();
-                groups[key] = list;
+                list = new List<int>(4);
+                grid[key] = list;
             }
             list.Add(i);
         }
 
-        // Average within each group
-        var outNormals = new Vector3[normals.Length];
-        foreach (var kv in groups)
+        // For each vertex, average normals of neighbors within radius
+        Vector3[] outNormals = new Vector3[vertexCount];
+        float radiusSqr = radius * radius;
+        // Neighbor cell search extents (1 cell in each direction is sufficient since cellSize == radius)
+        int range = 1;
+        for (int i = 0; i < vertexCount; i++)
         {
-            var list = kv.Value;
-            Vector3 avg = Vector3.zero;
-            for (int i = 0; i < list.Count; i++) avg += normals[list[i]];
-            if (avg.sqrMagnitude > 1e-12f) avg.Normalize();
-            for (int i = 0; i < list.Count; i++)
+            Vector3 p = vertices[i];
+            int cx = Mathf.FloorToInt(p.x * invCell);
+            int cy = Mathf.FloorToInt(p.y * invCell);
+            int cz = Mathf.FloorToInt(p.z * invCell);
+
+            Vector3 sum = Vector3.zero;
+            int count = 0;
+            for (int dx = -range; dx <= range; dx++)
+            for (int dy = -range; dy <= range; dy++)
+            for (int dz = -range; dz <= range; dz++)
             {
-                int idx = list[i];
-                outNormals[idx] = Vector3.Slerp(normals[idx], avg, strength);
+                var key = (cx + dx, cy + dy, cz + dz);
+                if (!grid.TryGetValue(key, out var list)) continue;
+                for (int li = 0; li < list.Count; li++)
+                {
+                    int j = list[li];
+                    Vector3 q = vertices[j];
+                    if ((q - p).sqrMagnitude <= radiusSqr)
+                    {
+                        sum += baseNormals[j];
+                        count++;
+                    }
+                }
             }
+
+            Vector3 avg = count > 0 ? sum / Mathf.Max(1, count) : baseNormals[i];
+            if (avg.sqrMagnitude > 1e-12f) avg.Normalize();
+            outNormals[i] = Vector3.Slerp(baseNormals[i], avg, strength);
         }
 
+        // Write back
         mesh.SetNormals(new List<Vector3>(outNormals));
     }
 }
