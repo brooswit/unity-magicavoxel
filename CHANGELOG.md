@@ -21,6 +21,9 @@
 ### Cleanup
 - Simplify mesh cache to `(paletteName, frameIndex, scale)` since mode and smoothing are now static
 
+### UI
+- Add hidden advanced fields on `VoxelDefinition` for a future foldout: `smooth` (default true), `smoothEpsilon` (0.25), `smoothStrength` (1). Currently smoothing is always applied using these values.
+
 ### Improve
 - Add smooth normals option in `VoxelDefinition`:
   - `smoothNormals` (bool). Uses fixed parameters epsilon=0.25 and strength=1.0

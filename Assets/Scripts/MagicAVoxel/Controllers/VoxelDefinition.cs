@@ -9,6 +9,10 @@ using System;
 [ExecuteInEditMode]
 public class VoxelDefinition : MonoBehaviour
 {
+    // Advanced options foldout values (serialized, shown via custom inspector)
+    [HideInInspector] public bool smooth = true;
+    [HideInInspector] public float smoothEpsilon = 0.25f;
+    [HideInInspector] public float smoothStrength = 1f;
     [Header("Generation Settings")]
     [Tooltip("Scale applied when generating meshes (1.0 = 1 unit per voxel)")]
     public float scale = 1f;
