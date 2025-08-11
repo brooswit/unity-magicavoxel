@@ -47,7 +47,7 @@ public class VoxelDefinitionEditor : Editor
                 // Always display the snapped value
                 float displayValue = Mathf.Round(voxelDef.smoothGroupRadius / RADIUS_SNAP) * RADIUS_SNAP;
                 float newValue = EditorGUILayout.Slider(
-                    new GUIContent("Smooth Group Radius", "Radius in voxel units for grouping nearby vertices for smoothing (0=exact match, 0.5=half voxel radius, etc)"),
+                    new GUIContent("Normal Blur Radius (voxels)", "Radius in voxel units for blurring/averaging normals across nearby voxels (0=exact match, 0.5=half voxel radius, etc)"),
                     displayValue, 0f, 5f);
                 
                 if (EditorGUI.EndChangeCheck())

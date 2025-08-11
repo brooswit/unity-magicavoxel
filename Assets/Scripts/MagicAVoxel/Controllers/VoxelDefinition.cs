@@ -14,7 +14,7 @@ public class VoxelDefinition : MonoBehaviour
     [Tooltip("Strength of normal smoothing (0=hard edges, 1=fully smooth)")]
     public float smoothStrength = 1f;
     [Range(0f, 5f)]
-    [Tooltip("Radius in voxel units for grouping nearby vertices for smoothing (0=exact match, 0.5=half voxel radius, etc)")]
+    [Tooltip("Radius in voxel units for blurring/averaging normals across nearby voxels (0=exact match, 0.5=half voxel radius, etc)")]
     public float smoothGroupRadius = 0f;
     [Header("Generation Settings")]
     [Tooltip("Scale applied when generating meshes (1.0 = 1 unit per voxel)")]
