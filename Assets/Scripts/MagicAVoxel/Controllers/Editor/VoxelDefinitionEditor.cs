@@ -33,7 +33,7 @@ public class VoxelDefinitionEditor : Editor
                 
                 if (EditorGUI.EndChangeCheck())
                 {
-                    // Snap immediately
+                    // Snap immediately and trigger mesh refresh in scene
                     float snappedValue = Mathf.Round(newValue / STRENGTH_SNAP) * STRENGTH_SNAP;
                     Undo.RecordObject(voxelDef, "Change Smooth Strength");
                     voxelDef.smoothStrength = snappedValue;
@@ -41,6 +41,16 @@ public class VoxelDefinitionEditor : Editor
                     // Force Scene view repaint to reflect normal changes immediately in edit mode
                     #if UNITY_EDITOR
                     UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+                    // Proactively update any selectors referencing this definition
+                    var selectors = GameObject.FindObjectsOfType<VoxelMeshSelector>(true);
+                    foreach (var sel in selectors)
+                    {
+                        if (sel != null && sel.GetVoxelDefinition() == voxelDef)
+                        {
+                            sel.SelectPalette(sel.GetCurrentPalette());
+                            sel.SelectFrame(sel.GetCurrentFrame());
+                        }
+                    }
                     #endif
                 }
             }
@@ -56,13 +66,22 @@ public class VoxelDefinitionEditor : Editor
                 
                 if (EditorGUI.EndChangeCheck())
                 {
-                    // Snap immediately
+                    // Snap immediately and trigger mesh refresh in scene
                     float snappedValue = Mathf.Round(newValue / RADIUS_SNAP) * RADIUS_SNAP;
                     Undo.RecordObject(voxelDef, "Change Smooth Group Radius");
                     voxelDef.smoothGroupRadius = snappedValue;
                     EditorUtility.SetDirty(voxelDef);
                     #if UNITY_EDITOR
                     UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+                    var selectors = GameObject.FindObjectsOfType<VoxelMeshSelector>(true);
+                    foreach (var sel in selectors)
+                    {
+                        if (sel != null && sel.GetVoxelDefinition() == voxelDef)
+                        {
+                            sel.SelectPalette(sel.GetCurrentPalette());
+                            sel.SelectFrame(sel.GetCurrentFrame());
+                        }
+                    }
                     #endif
                 }
             }

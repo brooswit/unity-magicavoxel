@@ -71,6 +71,23 @@ public class VoxelDefinition : MonoBehaviour
 
         // Ensure listeners refresh even if initialization short-circuits
         OnCacheReinitialized?.Invoke();
+
+        // Fallback: proactively refresh any selectors using this definition
+        try
+        {
+            var selectors = GameObject.FindObjectsOfType<VoxelMeshSelector>(true);
+            for (int i = 0; i < selectors.Length; i++)
+            {
+                var sel = selectors[i];
+                if (sel != null && sel.GetVoxelDefinition() == this)
+                {
+                    // Re-select current frame/palette to trigger mesh update
+                    sel.SelectPalette(sel.GetCurrentPalette());
+                    sel.SelectFrame(sel.GetCurrentFrame());
+                }
+            }
+        }
+        catch { /* ignore editor-time find exceptions */ }
     }
     
     void OnDestroy()
