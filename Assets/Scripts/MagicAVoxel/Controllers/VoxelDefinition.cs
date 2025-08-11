@@ -9,9 +9,10 @@ using System;
 [ExecuteInEditMode]
 public class VoxelDefinition : MonoBehaviour
 {
-    // Advanced options foldout values (serialized, shown via custom inspector)
-    [HideInInspector] public bool smooth = true;
-    [HideInInspector] public float smoothStrength = 1f;
+    [Header("Smoothing")]
+    [Range(0f, 1f)]
+    [Tooltip("Strength of normal smoothing (0=hard edges, 1=fully smooth)")]
+    public float smoothStrength = 1f;
     [Header("Generation Settings")]
     [Tooltip("Scale applied when generating meshes (1.0 = 1 unit per voxel)")]
     public float scale = 1f;
@@ -188,8 +189,8 @@ public class VoxelDefinition : MonoBehaviour
             return null;
         }
         
-        // Cache key (cubic only); include smoothing strength. If smoothing disabled, strength=0 in key
-        float keyStrength = smooth ? Mathf.Clamp01(smoothStrength) : 0f;
+        // Cache key (cubic only); include smoothing strength
+        float keyStrength = Mathf.Clamp01(smoothStrength);
         var key = (paletteName, frame, scale, keyStrength);
         
         // Return cached if available
@@ -208,8 +209,8 @@ public class VoxelDefinition : MonoBehaviour
         {
             float effectiveScale = Mathf.Max(0.0001f, scale);
             mesh = VoxTools.GenerateMesh(_cachedVoxData.frames[frame], palette, effectiveScale);
-            // Apply smoothing if enabled and strength > 0
-            if (mesh != null && smooth && keyStrength > 0f)
+            // Apply smoothing if strength > 0
+            if (mesh != null && keyStrength > 0f)
             {
                 ApplySmoothNormals(mesh, 0f, keyStrength);
             }
