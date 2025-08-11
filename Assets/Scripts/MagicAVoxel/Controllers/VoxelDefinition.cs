@@ -48,6 +48,13 @@ public class VoxelDefinition : MonoBehaviour
     
     //=========================================================================
     // Unity lifecycle methods
+    
+    private void OnValidate()
+    {
+        // Snap values to their respective increments
+        smoothStrength = Mathf.Round(smoothStrength * 10f) * 0.1f;
+        smoothGroupRadius = Mathf.Round(smoothGroupRadius * 4f) * 0.25f;
+    }
     void Awake()
     {
         InitializeCache();

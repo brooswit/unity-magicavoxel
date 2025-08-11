@@ -25,13 +25,15 @@ public class VoxelDefinitionEditor : Editor
             {
                 // Custom slider with snapping for smoothStrength
                 EditorGUI.BeginChangeCheck();
+                // Always display the snapped value
+                float displayValue = Mathf.Round(voxelDef.smoothStrength / STRENGTH_SNAP) * STRENGTH_SNAP;
                 float newValue = EditorGUILayout.Slider(
                     new GUIContent("Smooth Strength", "Strength of normal smoothing (0=hard edges, 1=fully smooth)"),
-                    voxelDef.smoothStrength, 0f, 1f);
+                    displayValue, 0f, 1f);
                 
                 if (EditorGUI.EndChangeCheck())
                 {
-                    // Snap to nearest 0.1
+                    // Snap immediately
                     float snappedValue = Mathf.Round(newValue / STRENGTH_SNAP) * STRENGTH_SNAP;
                     Undo.RecordObject(voxelDef, "Change Smooth Strength");
                     voxelDef.smoothStrength = snappedValue;
@@ -42,13 +44,15 @@ public class VoxelDefinitionEditor : Editor
             {
                 // Custom slider with snapping for smoothGroupRadius
                 EditorGUI.BeginChangeCheck();
+                // Always display the snapped value
+                float displayValue = Mathf.Round(voxelDef.smoothGroupRadius / RADIUS_SNAP) * RADIUS_SNAP;
                 float newValue = EditorGUILayout.Slider(
                     new GUIContent("Smooth Group Radius", "Radius in voxel units for grouping nearby vertices for smoothing (0=exact match, 0.5=half voxel radius, etc)"),
-                    voxelDef.smoothGroupRadius, 0f, 5f);
+                    displayValue, 0f, 5f);
                 
                 if (EditorGUI.EndChangeCheck())
                 {
-                    // Snap to nearest 0.25
+                    // Snap immediately
                     float snappedValue = Mathf.Round(newValue / RADIUS_SNAP) * RADIUS_SNAP;
                     Undo.RecordObject(voxelDef, "Change Smooth Group Radius");
                     voxelDef.smoothGroupRadius = snappedValue;
