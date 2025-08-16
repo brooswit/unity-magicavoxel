@@ -1,5 +1,15 @@
 # CHANGELOG
 ## 1.3.0
+### Project Organization and Structure
+- Reorganize project files into logical folders for better maintainability:
+  - Move `VoxelDefinition.cs` and `VoxelMeshSelector.cs` to `Controllers/` (component controllers)
+  - Move `VoxAsset.cs` to `Assets/` (asset types)
+  - Move `VoxAutoReload.cs` to `Editor/` (editor-only tools)
+  - Move `VoxTools.cs` to `Utils/` (utility functions)
+  - Rename `Vox/` folder to `Data/` (contains data structures: `VoxData`, `VoxFrame`, `VoxPalette`)
+- Update namespace organization to match new folder structure
+- Improve code discoverability with clear separation of concerns
+
 ### Marching Cubes fixes, refactor, and inspector options
 - Move lookup tables (`EdgeTable`, `TriTable`, `EdgeIndexPairs`, `CornerOffsets`) to `Assets/Scripts/MagicAVoxel/Utils/MarchingCubesTables.cs` to prevent accidental edits
 - Fix boundary face generation by marching over a padded grid and keeping density padding empty while color padding inherits nearest in-bounds palette indices
